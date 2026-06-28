@@ -1,12 +1,7 @@
 #!/bin/bash
 
 # ============================================================
-# SCRIPT CÀI ĐẶT & TỐI ƯU ARCH LINUX (BẢN ĐẦY ĐỦ + VLC)
-# Bao gồm: ibus-unikey, plank, tailscale, openssh, bluetooth, tlp
-# yt-dlp, wine (full plugins), driver intel, VLC
-# wps-office, zalo-chat-unofficial, tradingview, metatrader 5, calculator
-# forecast, firefox
-# Và tự động dọn dẹp log lúc 3h sáng
+# SCRIPT CÀI ĐẶT & TỐI ƯU ARCH LINUX (BẢN SỬA LỖI)
 # ============================================================
 
 set -e
@@ -27,7 +22,7 @@ LOG_COMPRESS=7
 CLEANUP_HOUR=3
 
 # ============================================================
-# HÀM HIỂN THỊ
+# HÀM TIỆN ÍCH
 # ============================================================
 
 print_header() {
@@ -52,6 +47,53 @@ print_warning() {
     echo -e "${YELLOW}⚠ $1${NC}"
 }
 
+get_current_user() {
+    # Lấy username chính xác khi chạy sudo
+    local user=$(logname 2>/dev/null || echo $SUDO_USER 2>/dev/null || echo $USER)
+    echo "$user"
+}
+
+check_distro() {
+    if ! grep -q "ID=arch" /etc/os-release 2>/dev/null; then
+        print_error "Script này chỉ chạy trên Arch Linux!"
+        echo "Distro hiện tại: $(cat /etc/os-release | grep PRETTY_NAME | cut -d'"' -f2)"
+        exit 1
+    fi
+    print_success "Distro: Arch Linux"
+}
+
+check_internet() {
+    print_step "Kiểm tra kết nối Internet..."
+    if ! ping -c 3 archlinux.org >/dev/null 2>&1; then
+        print_error "Không có kết nối Internet!"
+        exit 1
+    fi
+    print_success "Kết nối Internet OK"
+}
+
+check_disk_space() {
+    print_step "Kiểm tra dung lượng đĩa..."
+    local available=$(df -BG / | awk 'NR==2 {print $4}' | sed 's/G//')
+    if [ "$available" -lt 10 ]; then
+        print_error "Dung lượng đĩa còn < 10GB ($available GB)! Không đủ để cài đặt."
+        exit 1
+    fi
+    print_success "Dung lượng đĩa: $available GB (đủ)"
+}
+
+backup_config() {
+    print_step "Backup cấu hình hiện tại..."
+    local backup_dir="/root/backup_$(date +%Y%m%d_%H%M%S)"
+    mkdir -p "$backup_dir"
+    
+    # Backup các file quan trọng
+    [ -f /etc/lightdm/lightdm.conf ] && cp /etc/lightdm/lightdm.conf "$backup_dir/" 2>/dev/null
+    [ -f /etc/mkinitcpio.conf ] && cp /etc/mkinitcpio.conf "$backup_dir/" 2>/dev/null
+    [ -f /etc/tlp.conf ] && cp /etc/tlp.conf "$backup_dir/" 2>/dev/null
+    
+    print_success "Backup đã lưu tại: $backup_dir"
+}
+
 # ============================================================
 # PHẦN 1: GỠ BỎ XFCE4-PANEL
 # ============================================================
@@ -67,7 +109,6 @@ remove_xfce4_panel() {
         print_warning "xfce4-panel chưa được cài đặt, bỏ qua"
     fi
     
-    # Làm sạch cấu hình còn sót lại
     print_step "Đang làm sạch cấu hình xfce4..."
     rm -rf /etc/xdg/xfce4 2>/dev/null || true
     rm -rf ~/.config/xfce4 2>/dev/null || true
@@ -143,13 +184,16 @@ EOF
     if ! command -v yay &> /dev/null; then
         print_warning "Yay chưa được cài đặt, đang cài đặt..."
         pacman -S --noconfirm git base-devel
-        git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
+        git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin 2>/dev/null || {
+            print_error "Không thể clone yay-bin! Kiểm tra kết nối mạng."
+            return 1
+        }
         cd /tmp/yay-bin
         makepkg -si --noconfirm
         cd /
         rm -rf /tmp/yay-bin
     fi
-    yay -S --noconfirm forecast
+    yay -S --noconfirm forecast || print_warning "Forecast có thể đã được cài"
     print_success "Đã cài đặt Forecast"
 
     # 6. Tailscale
@@ -171,7 +215,8 @@ EOF
     pacman -S --noconfirm bluez bluez-utils blueman
     systemctl enable bluetooth
     systemctl start bluetooth
-    usermod -aG lp $(who am i | awk '{print $1}') 2>/dev/null || true
+    local current_user=$(get_current_user)
+    usermod -aG lp "$current_user" 2>/dev/null || true
     print_success "Đã cài đặt Bluetooth"
 
     # 9. TLP
@@ -202,7 +247,7 @@ EOF
     # Bật multilib nếu chưa có
     if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
         echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
-        pacman -Sy
+        pacman -Sy --noconfirm
     fi
     
     # Wine core
@@ -235,12 +280,14 @@ EOF
         lib32-sqlite \
         lib32-libxslt \
         lib32-libva \
-        lib32-gtk3
+        lib32-gtk3 \
+        2>/dev/null || print_warning "Một số package Wine có thể không có sẵn"
     print_success "Đã cài đặt Wine và plugin đầy đủ"
 
     # 13. WPS Office
     print_step "13. Cài đặt WPS Office..."
-    yay -S --noconfirm wps-office-cn wps-office-mui-zh-cn ttf-wps-fonts freetype2-wps libtiff5
+    yay -S --noconfirm wps-office-cn wps-office-mui-zh-cn ttf-wps-fonts freetype2-wps libtiff5 2>/dev/null || \
+        print_warning "WPS Office có thể cần cài thủ công"
     print_success "Đã cài đặt WPS Office"
 
     # 14. Zalo Chat Unofficial
@@ -248,14 +295,15 @@ EOF
     if ! command -v snap &> /dev/null; then
         pacman -S --noconfirm snapd
         systemctl enable --now snapd.socket
-        ln -s /var/lib/snapd/snap /snap
+        ln -sf /var/lib/snapd/snap /snap
     fi
-    snap install zalo-chat-unofficial
+    snap install zalo-chat-unofficial 2>/dev/null || print_warning "Zalo có thể đã được cài"
     print_success "Đã cài đặt Zalo Chat Unofficial"
 
     # 15. TradingView
     print_step "15. Cài đặt TradingView..."
-    yay -S --noconfirm tradingview 2>/dev/null || snap install tradingview
+    yay -S --noconfirm tradingview 2>/dev/null || snap install tradingview 2>/dev/null || \
+        print_warning "TradingView cần cài thủ công"
     print_success "Đã cài đặt TradingView"
 
     # 16. MetaTrader 5
@@ -264,10 +312,16 @@ EOF
     print_warning "👉 Nếu gặp lỗi, downgrade Wine xuống 10.2:"
     print_warning "   sudo pacman -U /var/cache/pacman/pkg/wine-10.2-1-x86_64.pkg.tar.zst"
     
-    wget -O /tmp/mt5linux.sh https://download.terminal.free/cdn/web/metaquotes.software.corp/mt5/mt5linux.sh
-    chmod +x /tmp/mt5linux.sh
-    su -c "/tmp/mt5linux.sh" $(who am i | awk '{print $1}')
-    print_success "Đã cài đặt MetaTrader 5"
+    wget -O /tmp/mt5linux.sh https://download.terminal.free/cdn/web/metaquotes.software.corp/mt5/mt5linux.sh 2>/dev/null || {
+        print_warning "Không thể tải MT5, bỏ qua"
+    }
+    if [ -f /tmp/mt5linux.sh ]; then
+        chmod +x /tmp/mt5linux.sh
+        local current_user=$(get_current_user)
+        sudo -u "$current_user" /tmp/mt5linux.sh 2>/dev/null || print_warning "MT5 cài thất bại"
+        rm -f /tmp/mt5linux.sh
+        print_success "Đã cài đặt MetaTrader 5"
+    fi
 
     # 17. Calculator Linux (GNOME Calculator)
     print_step "17. Cài đặt Calculator..."
@@ -280,8 +334,120 @@ EOF
         gstreamer gst-plugins-base gst-plugins-good gst-plugins-bad gst-plugins-ugly
     print_success "Đã cài đặt gói bổ sung"
 
-    # 19. Autostart
-    print_step "19. Cấu hình tự động khởi động..."
+    # 19. Icon Papirus
+    print_step "19. Cài đặt Icon Papirus..."
+    pacman -S --noconfirm papirus-icon-theme
+    print_success "Đã cài đặt Icon Papirus"
+
+    # 20. LightDM Webkit và Theme Dark Planet
+    print_step "20. Cài đặt LightDM Webkit và Theme Dark Planet..."
+    
+    # Kiểm tra display manager hiện tại
+    if systemctl is-active --quiet gdm 2>/dev/null || systemctl is-active --quiet sddm 2>/dev/null; then
+        print_warning "Phát hiện display manager khác (GDM/SDDM)"
+        print_warning "Sẽ disable và thay thế bằng LightDM"
+        systemctl stop gdm 2>/dev/null || true
+        systemctl stop sddm 2>/dev/null || true
+        systemctl disable gdm 2>/dev/null || true
+        systemctl disable sddm 2>/dev/null || true
+    fi
+    
+    # Cài đặt lightdm-webkit2-greeter
+    pacman -S --noconfirm lightdm-webkit2-greeter lightdm
+    
+    # Tải và cài đặt theme Dark Planet
+    if [ -d /tmp/dark-planet ]; then
+        rm -rf /tmp/dark-planet
+    fi
+    git clone https://github.com/Antergos/web-greeter-theme-dark-planet.git /tmp/dark-planet 2>/dev/null || {
+        print_warning "Không thể clone theme Dark Planet, tạo theme mặc định"
+        mkdir -p /usr/share/web-greeter/themes/dark-planet
+    }
+    if [ -d /tmp/dark-planet ]; then
+        mkdir -p /usr/share/web-greeter/themes/
+        cp -r /tmp/dark-planet /usr/share/web-greeter/themes/dark-planet
+        rm -rf /tmp/dark-planet
+    fi
+    
+    # Cấu hình LightDM
+    mkdir -p /etc/lightdm
+    cat > /etc/lightdm/lightdm.conf << EOF
+[Seat:*]
+greeter-session=lightdm-webkit2-greeter
+user-session=xfce
+EOF
+
+    # Cấu hình webkit2 greeter
+    cat > /etc/lightdm/lightdm-webkit2-greeter.conf << EOF
+[greeter]
+webkit-theme = dark-planet
+debug-mode = false
+screensaver-timeout = 30
+show-pane = true
+show-keyboard = true
+EOF
+
+    # Enable LightDM (chỉ khi không có DM khác)
+    systemctl enable lightdm 2>/dev/null || print_warning "LightDM không thể enable"
+    print_success "Đã cài đặt LightDM Webkit và Theme Dark Planet"
+
+    # 21. Plymouth và Theme Dark Planet
+    print_step "21. Cài đặt Plymouth và Theme Dark Planet..."
+    pacman -S --noconfirm plymouth
+    
+    # Tải và cài đặt theme Dark Planet cho Plymouth
+    mkdir -p /usr/share/plymouth/themes/dark-planet
+    cat > /usr/share/plymouth/themes/dark-planet/dark-planet.plymouth << 'EOF'
+[Plymouth Theme]
+Name=Dark Planet
+Description=Dark Planet Boot Splash
+ModuleName=two-step
+
+[two-step]
+ImageDir=/usr/share/plymouth/themes/dark-planet
+HorizontalAlignment=.5
+VerticalAlignment=.5
+TransitionDuration=2.0
+Transition=none
+BackgroundStartColor=0x0a0a0a
+BackgroundEndColor=0x1a1a2e
+EOF
+
+    # Tạo background và logo đơn giản (sử dụng ImageMagick nếu có)
+    pacman -S --noconfirm imagemagick 2>/dev/null || true
+    
+    if command -v convert &> /dev/null; then
+        # Tạo background
+        convert -size 1920x1080 gradient:black-darkblue /usr/share/plymouth/themes/dark-planet/background.png 2>/dev/null || true
+        
+        # Tạo logo đơn giản (hình tròn với chữ A)
+        convert -size 100x100 xc:transparent -fill white -draw "circle 50,50 50,10" \
+            -gravity center -pointsize 40 -fill black -draw "text 0,-5 'A'" \
+            /usr/share/plymouth/themes/dark-planet/logo.png 2>/dev/null || true
+    fi
+
+    # Cấu hình Plymouth
+    sed -i 's/^#*\(Theme=\).*$/\1dark-planet/' /etc/plymouth/plymouthd.conf 2>/dev/null || \
+        echo "Theme=dark-planet" > /etc/plymouth/plymouthd.conf
+    
+    # Cập nhật initramfs - SỬA LỖI HOOKS
+    if command -v mkinitcpio &> /dev/null; then
+        # Thêm plymouth vào HOOKS nếu chưa có
+        if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
+            # Sửa HOOKS an toàn hơn
+            if grep -q "^HOOKS=" /etc/mkinitcpio.conf; then
+                sed -i 's/^HOOKS=(/HOOKS=(plymouth /' /etc/mkinitcpio.conf
+            else
+                echo 'HOOKS=(base udev plymouth autodetect modconf block filesystems keyboard fsck)' >> /etc/mkinitcpio.conf
+            fi
+        fi
+        mkinitcpio -p linux 2>/dev/null || print_warning "mkinitcpio thất bại, Plymouth có thể không hoạt động"
+    fi
+    
+    print_success "Đã cài đặt Plymouth và Theme Dark Planet"
+
+    # 22. Autostart
+    print_step "22. Cấu hình tự động khởi động..."
     mkdir -p /etc/skel/.config/autostart
     
     cat > /etc/skel/.config/autostart/plank.desktop << EOF
@@ -333,30 +499,37 @@ log_message() {
 # Bắt đầu
 log_message "========== BẮT ĐẦU DỌN DẸP =========="
 
-# 1. Xóa log cũ
+# 1. Backup log quan trọng trước khi xóa
+log_message "Đang backup log quan trọng..."
+mkdir -p "$BACKUP_DIR/$(date +%Y%m%d)"
+find "$LOG_DIR" -name "*error*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/$(date +%Y%m%d)/" \; 2>/dev/null
+find "$LOG_DIR" -name "*critical*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/$(date +%Y%m%d)/" \; 2>/dev/null
+find "$LOG_DIR" -name "*secure*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/$(date +%Y%m%d)/" \; 2>/dev/null
+
+# 2. Xóa log cũ
 log_message "Đang xóa log cũ hơn $RETENTION_DAYS ngày..."
 find "$LOG_DIR" -name "*.log" -type f -mtime +$RETENTION_DAYS -delete 2>/dev/null
 find "$LOG_DIR" -name "*.log.*" -type f -mtime +$RETENTION_DAYS -delete 2>/dev/null
 
-# 2. Xóa log rỗng
+# 3. Xóa log rỗng
 log_message "Đang xóa file log rỗng..."
 find "$LOG_DIR" -name "*.log" -type f -empty -delete 2>/dev/null
 
-# 3. Nén log cũ
+# 4. Nén log cũ
 log_message "Đang nén log từ $COMPRESS_DAYS-$RETENTION_DAYS ngày..."
 find "$LOG_DIR" -name "*.log" -type f -mtime +$COMPRESS_DAYS -mtime -$RETENTION_DAYS -exec gzip -9 {} \; 2>/dev/null
 find "$LOG_DIR" -name "*.log.*" -type f -mtime +$COMPRESS_DAYS -mtime -$RETENTION_DAYS -exec gzip -9 {} \; 2>/dev/null
 
-# 4. Logrotate
+# 5. Logrotate
 log_message "Đang chạy logrotate..."
 command -v logrotate &>/dev/null && logrotate -f /etc/logrotate.conf 2>/dev/null
 
-# 5. Journald
+# 6. Journald
 log_message "Đang dọn dẹp journald..."
 command -v journalctl &>/dev/null && journalctl --vacuum-time=${RETENTION_DAYS}d 2>/dev/null
 command -v journalctl &>/dev/null && journalctl --vacuum-size=500M 2>/dev/null
 
-# 6. Tối ưu log
+# 7. Tối ưu log
 log_message "Đang tối ưu log..."
 find "$LOG_DIR" -name "*.log" -type f -size +100k -exec sh -c '
     for file do
@@ -367,13 +540,7 @@ find "$LOG_DIR" -name "*.log" -type f -size +100k -exec sh -c '
     done
 ' sh {} + 2>/dev/null
 
-# 7. Backup log quan trọng
-log_message "Đang backup log quan trọng..."
-find "$LOG_DIR" -name "*error*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/" \; 2>/dev/null
-find "$LOG_DIR" -name "*critical*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/" \; 2>/dev/null
-find "$LOG_DIR" -name "*secure*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/" \; 2>/dev/null
-
-# 8. Nén archive
+# 8. Nén archive cũ
 log_message "Đang nén archive cũ..."
 find "$ARCHIVE_DIR" -name "*.log" -type f -mtime +60 -exec gzip -9 {} \; 2>/dev/null
 
@@ -461,14 +628,16 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${YELLOW}===== TRẠNG THÁI DỊCH VỤ =====${NC}"
-echo "Tailscale: $(systemctl is-active tailscaled)"
-echo "SSH: $(systemctl is-active sshd)"
-echo "Bluetooth: $(systemctl is-active bluetooth)"
-echo "TLP: $(systemctl is-active tlp)"
-echo "Log Cleanup Timer: $(systemctl is-active log-cleanup.timer)"
+echo "Tailscale: $(systemctl is-active tailscaled 2>/dev/null || echo 'inactive')"
+echo "SSH: $(systemctl is-active sshd 2>/dev/null || echo 'inactive')"
+echo "Bluetooth: $(systemctl is-active bluetooth 2>/dev/null || echo 'inactive')"
+echo "TLP: $(systemctl is-active tlp 2>/dev/null || echo 'inactive')"
+echo "LightDM: $(systemctl is-active lightdm 2>/dev/null || echo 'inactive')"
+echo "Plymouth: $(systemctl is-active plymouth-quit 2>/dev/null || echo 'inactive')"
+echo "Log Cleanup Timer: $(systemctl is-active log-cleanup.timer 2>/dev/null || echo 'inactive')"
 echo ""
 echo -e "${YELLOW}===== THÔNG TIN PIN =====${NC}"
-tlp-stat -b | grep -E "Charge|Status" 2>/dev/null || echo "Không có dữ liệu pin"
+tlp-stat -b 2>/dev/null | grep -E "Charge|Status" || echo "Không có dữ liệu pin"
 echo ""
 echo -e "${YELLOW}===== DỤNG LƯỢNG LOG =====${NC}"
 du -sh /var/log 2>/dev/null
@@ -480,7 +649,7 @@ echo -e "${YELLOW}===== KIỂM TRA WINE =====${NC}"
 wine --version 2>/dev/null || echo "Wine chưa được cấu hình"
 echo ""
 echo -e "${YELLOW}===== KIỂM TRA DRIVER INTEL =====${NC}"
-glxinfo | grep "OpenGL renderer" 2>/dev/null | head -1 || echo "Không có thông tin OpenGL"
+glxinfo 2>/dev/null | grep "OpenGL renderer" | head -1 || echo "Không có thông tin OpenGL"
 echo ""
 echo -e "${YELLOW}===== CÁC ỨNG DỤNG ĐÃ CÀI =====${NC}"
 command -v firefox &>/dev/null && echo "✓ Firefox" || echo "✗ Firefox"
@@ -490,7 +659,12 @@ command -v wps &>/dev/null && echo "✓ WPS Office" || echo "✗ WPS Office"
 command -v tradingview &>/dev/null && echo "✓ TradingView" || echo "✗ TradingView"
 command -v gnome-calculator &>/dev/null && echo "✓ GNOME Calculator" || echo "✗ GNOME Calculator"
 snap list 2>/dev/null | grep -q zalo && echo "✓ Zalo Chat" || echo "✗ Zalo Chat"
-ls ~/.mt5wine 2>/dev/null && echo "✓ MetaTrader 5" || echo "✗ MetaTrader 5"
+[ -d ~/.mt5wine ] 2>/dev/null && echo "✓ MetaTrader 5" || echo "✗ MetaTrader 5"
+echo ""
+echo -e "${YELLOW}===== THEMES ĐÃ CÀI =====${NC}"
+[ -d /usr/share/plymouth/themes/dark-planet ] && echo "✓ Plymouth Dark Planet" || echo "✗ Plymouth Dark Planet"
+[ -d /usr/share/web-greeter/themes/dark-planet ] && echo "✓ LightDM Dark Planet" || echo "✗ LightDM Dark Planet"
+ls /usr/share/icons/ 2>/dev/null | grep -q Papirus && echo "✓ Papirus Icons" || echo "✗ Papirus Icons"
 EOF
     chmod +x /usr/local/bin/check-status
     
@@ -609,6 +783,9 @@ show_summary() {
     echo "  ✓ TradingView (AUR/Snap)"
     echo "  ✓ MetaTrader 5 (qua Wine)"
     echo "  ✓ GNOME Calculator"
+    echo "  ✓ Papirus Icon Theme"
+    echo "  ✓ LightDM Webkit + Dark Planet Theme"
+    echo "  ✓ Plymouth + Dark Planet Theme"
     echo "  ✓ Logrotate + Cleanup (dọn dẹp log)"
     
     echo -e "\n${GREEN}Đã gỡ bỏ:${NC}"
@@ -618,6 +795,8 @@ show_summary() {
     echo "  ✓ Ngưỡng sạc pin: $START_CHARGE% - $STOP_CHARGE%"
     echo "  ✓ Dọn dẹp log: ${CLEANUP_HOUR}h sáng hàng ngày"
     echo "  ✓ Tự động khởi động: Plank, IBus"
+    echo "  ✓ Giao diện đăng nhập: LightDM Webkit với Dark Planet"
+    echo "  ✓ Boot splash: Plymouth với Dark Planet"
     
     echo -e "\n${YELLOW}📋 HƯỚNG DẪN SỬ DỤNG:${NC}"
     echo -e "1. ${CYAN}Kiểm tra trạng thái:${NC} sudo check-status"
@@ -635,21 +814,25 @@ show_summary() {
     echo -e "13. ${CYAN}Mở TradingView:${NC} tradingview"
     echo -e "14. ${CYAN}Mở MT5:${NC} ~/.mt5wine/drive_c/Program\ Files/MetaTrader\ 5/terminal.exe"
     echo -e "15. ${CYAN}Mở Calculator:${NC} gnome-calculator"
+    echo -e "16. ${CYAN}Đổi icon theme:${NC} Cài đặt Papirus qua công cụ của XFCE"
     
     echo -e "\n${GREEN}📁 Log và báo cáo:${NC}"
     echo "  • Báo cáo dọn dẹp: /var/log/cleanup_report_*.log"
     echo "  • Systemd log: sudo journalctl -u log-cleanup.service"
     
-    echo -e "\n${RED}⚠ LƯU Ý QUAN TRỌNG - METATRADER 5:${NC}"
+    echo -e "\n${RED}⚠ LƯU Ý QUAN TRỌNG:${NC}"
     echo "  • MT5 hiện có lỗi 'debugger found' trên Wine 10.3+"
     echo "  • Giải pháp: downgrade Wine xuống 10.2"
     echo "  • Hoặc sử dụng script chính thức từ MetaQuotes"
     echo "  • Xem hướng dẫn chi tiết: ${CYAN}wine-setup${NC}"
+    echo "  • LightDM sẽ là màn hình đăng nhập mới sau khi khởi động lại"
+    echo "  • Plymouth sẽ hiển thị splash screen khi boot"
     
     echo -e "\n${YELLOW}⚠ LƯU Ý CHUNG:${NC}"
     echo "  • Khởi động lại hệ thống để áp dụng đầy đủ"
     echo "  • Đăng nhập lại để dùng IBus-Unikey"
     echo "  • Kiểm tra Tailscale: sudo tailscale status"
+    echo "  • Nếu LightDM không hoạt động, check log: /var/log/lightdm/*"
     
     echo -e "\n${GREEN}========================================${NC}"
     echo -e "${GREEN}  🚀 HỆ THỐNG ĐÃ SẴN SÀNG!  ${NC}"
@@ -671,7 +854,23 @@ main() {
     clear
     print_header "CÀI ĐẶT & TỐI ƯU ARCH LINUX (BẢN ĐẦY ĐỦ + VLC)"
     echo -e "${CYAN}Thời gian: $(date '+%H:%M:%S %d/%m/%Y')${NC}"
-    echo -e "${CYAN}User: $(whoami)${NC}"
+    echo -e "${CYAN}User: $(get_current_user)${NC}"
+    
+    # Kiểm tra trước khi chạy
+    check_distro
+    check_internet
+    check_disk_space
+    backup_config
+    
+    # Hỏi xác nhận
+    echo -e "\n${YELLOW}⚠ Bạn có chắc chắn muốn tiếp tục?${NC}"
+    echo -e "Script sẽ cài đặt nhiều ứng dụng và thay đổi cấu hình hệ thống."
+    read -p "Nhấn y/Y để tiếp tục, bất kỳ phím nào khác để hủy: " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        print_warning "Đã hủy cài đặt."
+        exit 1
+    fi
     
     # Chạy các phần
     remove_xfce4_panel
@@ -683,7 +882,7 @@ main() {
     
     # Chạy thử cleanup lần đầu
     print_step "Chạy dọn dẹp log lần đầu..."
-    systemctl start log-cleanup.service
+    systemctl start log-cleanup.service 2>/dev/null || true
     
     # Hiển thị tổng kết
     show_summary
@@ -691,6 +890,8 @@ main() {
     # Hiển thị trạng thái timer
     echo -e "\n${CYAN}Lịch chạy tiếp theo:${NC}"
     systemctl list-timers log-cleanup.timer --no-pager 2>/dev/null || echo "Không có thông tin"
+    
+    echo -e "\n${GREEN}✅ SCRIPT HOÀN TẤT!${NC}"
 }
 
 # Chạy main
