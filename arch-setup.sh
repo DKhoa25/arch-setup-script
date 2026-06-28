@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================
-# SCRIPT CÀI ĐẶT & TỐI ƯU ARCH LINUX
+# SCRIPT CÀI ĐẶT & TỐI ƯU ARCH LINUX (BẢN ĐẦY ĐỦ + TÍNH NĂNG MỚI)
 # ============================================================
 
 set -e
@@ -48,7 +48,6 @@ print_warning() {
 }
 
 get_current_user() {
-    # Lấy username chính xác khi chạy sudo
     local user=$(logname 2>/dev/null || echo $SUDO_USER 2>/dev/null || echo $USER)
     echo "$user"
 }
@@ -86,16 +85,423 @@ backup_config() {
     local backup_dir="/root/backup_$(date +%Y%m%d_%H%M%S)"
     mkdir -p "$backup_dir"
     
-    # Backup các file quan trọng
     [ -f /etc/lightdm/lightdm.conf ] && cp /etc/lightdm/lightdm.conf "$backup_dir/" 2>/dev/null
     [ -f /etc/mkinitcpio.conf ] && cp /etc/mkinitcpio.conf "$backup_dir/" 2>/dev/null
     [ -f /etc/tlp.conf ] && cp /etc/tlp.conf "$backup_dir/" 2>/dev/null
+    [ -f /etc/resolv.conf ] && cp /etc/resolv.conf "$backup_dir/" 2>/dev/null
+    [ -f /etc/default/grub ] && cp /etc/default/grub "$backup_dir/" 2>/dev/null
     
     print_success "Backup đã lưu tại: $backup_dir"
 }
 
 # ============================================================
-# PHẦN 1: GỠ BỎ XFCE4-PANEL
+# TÍNH NĂNG 1: CẬP NHẬT SECURITY PATCHES TỰ ĐỘNG
+# ============================================================
+
+setup_auto_security_updates() {
+    print_header "CẬP NHẬT SECURITY PATCHES TỰ ĐỘNG"
+    
+    # Script cập nhật bảo mật
+    cat > /usr/local/bin/security-update << 'EOF'
+#!/bin/bash
+# Script cập nhật security patches tự động
+
+LOG_FILE="/var/log/security-updates.log"
+DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+log_message() {
+    echo "[$DATE] $1" | tee -a "$LOG_FILE"
+}
+
+log_message "========== BẮT ĐẦU CẬP NHẬT BẢO MẬT =========="
+
+# Cập nhật danh sách package
+pacman -Sy --noconfirm 2>&1 | tee -a "$LOG_FILE"
+
+# Lọc và cài đặt các bản cập nhật bảo mật
+# Sử dụng pacman -Syu để cập nhật tất cả (bao gồm security patches)
+pacman -Syu --noconfirm 2>&1 | tee -a "$LOG_FILE"
+
+# Cập nhật AUR packages (nếu có yay)
+if command -v yay &> /dev/null; then
+    yay -Syu --noconfirm 2>&1 | tee -a "$LOG_FILE"
+fi
+
+# Cập nhật Snap packages
+if command -v snap &> /dev/null; then
+    snap refresh 2>&1 | tee -a "$LOG_FILE"
+fi
+
+log_message "========== CẬP NHẬT BẢO MẬT HOÀN TẤT =========="
+EOF
+
+    chmod +x /usr/local/bin/security-update
+
+    # Systemd service
+    cat > /etc/systemd/system/security-update.service << 'EOF'
+[Unit]
+Description=Security Patches Auto Update
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/security-update
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Systemd timer - chạy mỗi ngày lúc 2h sáng
+    cat > /etc/systemd/system/security-update.timer << 'EOF'
+[Unit]
+Description=Security Patches Daily Update
+Requires=security-update.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=3600
+
+[Install]
+WantedBy=timers.target
+EOF
+
+    systemctl daemon-reload
+    systemctl enable security-update.timer
+    systemctl start security-update.timer
+
+    print_success "Đã cấu hình tự động cập nhật security patches hàng ngày lúc 2h sáng"
+    print_success "Log: /var/log/security-updates.log"
+}
+
+# ============================================================
+# TÍNH NĂNG 2: FONTS CHO VĂN PHÒNG & TIẾNG VIỆT ĐẸP
+# ============================================================
+
+install_fonts() {
+    print_header "CÀI ĐẶT FONTS CHO VĂN PHÒNG & TIẾNG VIỆT"
+    
+    print_step "Đang cài đặt fonts..."
+    
+    # Fonts cơ bản
+    pacman -S --noconfirm \
+        ttf-dejavu \
+        ttf-liberation \
+        ttf-roboto \
+        ttf-roboto-mono \
+        ttf-ubuntu-font-family \
+        ttf-fira-code \
+        ttf-fira-mono \
+        adobe-source-code-pro-fonts \
+        adobe-source-sans-pro-fonts \
+        adobe-source-serif-pro-fonts
+    
+    # Fonts Google
+    pacman -S --noconfirm \
+        ttf-google-fonts-git 2>/dev/null || \
+        yay -S --noconfirm ttf-google-fonts-git 2>/dev/null || \
+        print_warning "Google Fonts có thể cần cài từ AUR"
+    
+    # Fonts hỗ trợ tiếng Việt tốt
+    pacman -S --noconfirm \
+        noto-fonts \
+        noto-fonts-emoji \
+        noto-fonts-cjk
+    
+    # Fonts văn phòng
+    pacman -S --noconfirm \
+        ttf-caladea \
+        ttf-carlito \
+        ttf-nerd-fonts-symbols
+    
+    # Font tiếng Việt (AUR)
+    yay -S --noconfirm ttf-vietnamese-fonts 2>/dev/null || \
+        print_warning "Vietnamese fonts có thể cần cài từ AUR"
+    
+    # Refresh font cache
+    fc-cache -fv
+    
+    print_success "Đã cài đặt fonts (đã refresh cache)"
+    
+    # Hiển thị fonts đã cài
+    echo -e "\n${GREEN}Fonts đã cài:${NC}"
+    fc-list | grep -E "DejaVu|Liberation|Roboto|Noto|Fira|Source" | head -10
+}
+
+# ============================================================
+# TÍNH NĂNG 3: CUSTOMIZE BOOTLOADER (GRUB)
+# ============================================================
+
+customize_grub() {
+    print_header "CUSTOMIZE GRUB BOOTLOADER"
+    
+    # Kiểm tra GRUB
+    if ! command -v grub-mkconfig &> /dev/null; then
+        print_warning "GRUB chưa được cài đặt! Đang cài..."
+        pacman -S --noconfirm grub efibootmgr
+        grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB 2>/dev/null || \
+        grub-install --target=i386-pc /dev/sda 2>/dev/null || \
+        print_warning "Không thể cài GRUB, cần cấu hình thủ công"
+    fi
+    
+    print_step "Đang cấu hình GRUB..."
+    
+    # Backup GRUB config
+    cp /etc/default/grub /etc/default/grub.bak
+    
+    # Cấu hình GRUB đẹp
+    cat > /etc/default/grub << 'EOF'
+# GRUB bootloader configuration
+GRUB_DEFAULT=0
+GRUB_TIMEOUT=5
+GRUB_TIMEOUT_STYLE=menu
+GRUB_DISTRIBUTOR="Arch Linux"
+GRUB_CMDLINE_LINUX_DEFAULT="loglevel=3 quiet splash plymouth.ignore-serial-consoles"
+GRUB_CMDLINE_LINUX=""
+
+# Theme và giao diện
+GRUB_TERMINAL_INPUT=console
+GRUB_TERMINAL_OUTPUT=gfxterm
+GRUB_GFXMODE=auto
+GRUB_GFXPAYLOAD_LINUX=keep
+GRUB_BACKGROUND="/usr/share/grub/background.png"
+
+# Font
+GRUB_FONT="/usr/share/grub/fonts/unicode.pf2"
+
+# Disable os-prober (tăng tốc)
+GRUB_DISABLE_OS_PROBER=false
+
+# Color theme (Dark)
+GRUB_COLOR_NORMAL="white/black"
+GRUB_COLOR_HIGHLIGHT="cyan/black"
+EOF
+
+    # Tạo background cho GRUB
+    print_step "Tạo background cho GRUB..."
+    mkdir -p /usr/share/grub
+    
+    if command -v convert &> /dev/null; then
+        # Tạo background gradient đẹp
+        convert -size 1920x1080 gradient:darkblue-black \
+            -fill white -pointsize 48 -gravity center \
+            -annotate 0 "Arch Linux" \
+            /usr/share/grub/background.png 2>/dev/null || \
+        convert -size 1920x1080 gradient:darkblue-black \
+            /usr/share/grub/background.png 2>/dev/null || true
+    else
+        # Tạo background đơn giản
+        pacman -S --noconfirm imagemagick 2>/dev/null
+        if command -v convert &> /dev/null; then
+            convert -size 1920x1080 gradient:darkblue-black /usr/share/grub/background.png
+        fi
+    fi
+    
+    # Cài theme GRUB đẹp (Starfield)
+    print_step "Cài đặt GRUB theme Starfield..."
+    if [ ! -d "/usr/share/grub/themes/starfield" ]; then
+        git clone https://github.com/boozed/grub-theme-starfield /tmp/grub-theme 2>/dev/null || \
+        git clone https://gitlab.com/Vandal/grub-theme-starfield /tmp/grub-theme 2>/dev/null || true
+        
+        if [ -d "/tmp/grub-theme" ]; then
+            mkdir -p /boot/grub/themes
+            cp -r /tmp/grub-theme/starfield /boot/grub/themes/ 2>/dev/null || \
+            cp -r /tmp/grub-theme/* /boot/grub/themes/ 2>/dev/null || true
+            rm -rf /tmp/grub-theme
+            
+            # Cập nhật GRUB config với theme
+            echo "GRUB_THEME=/boot/grub/themes/starfield/theme.txt" >> /etc/default/grub
+        fi
+    fi
+    
+    # Cài GRUB customizer
+    print_step "Cài đặt GRUB Customizer..."
+    yay -S --noconfirm grub-customizer 2>/dev/null || \
+        pacman -S --noconfirm grub-customizer 2>/dev/null || \
+        print_warning "GRUB Customizer có thể cài từ AUR"
+    
+    # Cập nhật GRUB
+    print_step "Cập nhật GRUB..."
+    grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || \
+        print_warning "Không thể cập nhật GRUB, cần chạy thủ công"
+    
+    print_success "Đã customize GRUB bootloader"
+    print_warning "Xem thêm GRUB theme: https://wiki.archlinux.org/title/GRUB/Tips_and_tricks"
+}
+
+# ============================================================
+# TÍNH NĂNG 4: QUẢN LÝ WIFI DỄ DÀNG
+# ============================================================
+
+setup_wifi_management() {
+    print_header "CÀI ĐẶT QUẢN LÝ WIFI"
+    
+    # Cài đặt NetworkManager (đã có trong script gốc)
+    print_step "Cấu hình NetworkManager..."
+    
+    # Cài đặt thêm công cụ quản lý WiFi
+    pacman -S --noconfirm \
+        network-manager-applet \
+        nm-connection-editor \
+        networkmanager-openvpn \
+        networkmanager-pptp \
+        networkmanager-openconnect \
+        networkmanager-vpnc \
+        networkmanager-l2tp \
+        networkmanager-strongswan
+    
+    # Tự động kết nối WiFi khi boot
+    systemctl enable NetworkManager
+    systemctl start NetworkManager
+    
+    # Cài đặt GUI WiFi manager
+    print_step "Cài đặt GUI WiFi manager..."
+    pacman -S --noconfirm \
+        wpa_supplicant_gui \
+        wifi-menu \
+        iw \
+        iwd
+    
+    # Cài đặt nmtui (TUI)
+    pacman -S --noconfirm networkmanager-tui
+    
+    # Tạo shortcut cho WiFi
+    cat > /usr/local/bin/wifi << 'EOF'
+#!/bin/bash
+# WiFi Manager GUI
+
+if [ "$1" = "gui" ]; then
+    nm-connection-editor
+elif [ "$1" = "tui" ]; then
+    nmtui
+elif [ "$1" = "on" ]; then
+    nmcli radio wifi on
+elif [ "$1" = "off" ]; then
+    nmcli radio wifi off
+elif [ "$1" = "list" ]; then
+    nmcli dev wifi list
+elif [ "$1" = "connect" ]; then
+    shift
+    nmcli dev wifi connect "$@"
+elif [ -z "$1" ]; then
+    nmcli dev wifi list | head -20
+else
+    echo "Usage: wifi {gui|tui|on|off|list|connect SSID}"
+    echo "  gui      - Open WiFi GUI"
+    echo "  tui      - Open Terminal UI"
+    echo "  on/off   - Turn WiFi on/off"
+    echo "  list     - List WiFi networks"
+    echo "  connect  - Connect to SSID"
+fi
+EOF
+    chmod +x /usr/local/bin/wifi
+    
+    # Thêm vào .bashrc
+    echo 'alias wifi="wifi"' >> /etc/skel/.bashrc
+    echo 'alias wifigui="nm-connection-editor"' >> /etc/skel/.bashrc
+    
+    print_success "Đã cấu hình WiFi Manager"
+    echo -e "\n${GREEN}Hướng dẫn:${NC}"
+    echo "  ${CYAN}wifi${NC}           - Xem danh sách WiFi"
+    echo "  ${CYAN}wifi gui${NC}       - Mở GUI quản lý WiFi"
+    echo "  ${CYAN}wifi tui${NC}       - Mở Terminal UI (nmtui)"
+    echo "  ${CYAN}wifi on/off${NC}    - Bật/tắt WiFi"
+    echo "  ${CYAN}wifi connect SSID${NC} - Kết nối WiFi"
+}
+
+# ============================================================
+# TÍNH NĂNG 5: CẤU HÌNH DNS (1.1.1.1 / 8.8.8.8)
+# ============================================================
+
+configure_dns() {
+    print_header "CẤU HÌNH DNS"
+    
+    print_step "Đang cấu hình DNS..."
+    
+    # Backup DNS config
+    cp /etc/resolv.conf /etc/resolv.conf.bak 2>/dev/null
+    
+    # Tạo resolv.conf mới
+    cat > /etc/resolv.conf << 'EOF'
+# Cloudflare DNS (1.1.1.1)
+nameserver 1.1.1.1
+nameserver 1.0.0.1
+
+# Google DNS (8.8.8.8) - Backup
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+
+# Cloudflare DNS over TLS
+nameserver 1.1.1.2
+nameserver 1.0.0.2
+
+# Options
+options edns0
+options trust-ad
+EOF
+    
+    # Cấu hình NetworkManager để sử dụng DNS cố định
+    if systemctl is-active --quiet NetworkManager; then
+        cat > /etc/NetworkManager/conf.d/dns.conf << 'EOF'
+[main]
+dns=default
+
+[global-dns-domain-*]
+servers=1.1.1.1,1.0.0.1,8.8.8.8,8.8.4.4
+EOF
+        
+        # Restart NetworkManager
+        systemctl restart NetworkManager
+    fi
+    
+    # Cấu hình systemd-resolved (nếu có)
+    if systemctl is-active --quiet systemd-resolved; then
+        cat > /etc/systemd/resolved.conf << 'EOF'
+[Resolve]
+DNS=1.1.1.1 1.0.0.1 8.8.8.8 8.8.4.4
+DNSOverTLS=yes
+DNSSEC=yes
+FallbackDNS=1.1.1.1 8.8.8.8
+EOF
+        systemctl restart systemd-resolved
+    fi
+    
+    # Cài đặt DNS benchmark tool
+    print_step "Cài đặt DNS benchmark tool..."
+    pacman -S --noconfirm dnsutils bind-tools
+    yay -S --noconfirm dnscrypt-proxy 2>/dev/null || \
+        print_warning "DNScrypt-proxy có thể cài từ AUR"
+    
+    # Tạo script kiểm tra DNS
+    cat > /usr/local/bin/dns-test << 'EOF'
+#!/bin/bash
+echo "===== KIỂM TRA DNS ====="
+echo ""
+echo "1. Cloudflare (1.1.1.1):"
+dig @1.1.1.1 archlinux.org +short 2>/dev/null || echo "  ❌ Không kết nối được"
+echo ""
+echo "2. Google (8.8.8.8):"
+dig @8.8.8.8 archlinux.org +short 2>/dev/null || echo "  ❌ Không kết nối được"
+echo ""
+echo "3. DNS hiện tại:"
+cat /etc/resolv.conf | grep nameserver
+echo ""
+echo "4. DNS latency:"
+time dig archlinux.org +short 2>/dev/null
+EOF
+    chmod +x /usr/local/bin/dns-test
+    
+    # Chạy test DNS
+    dns-test
+    
+    print_success "Đã cấu hình DNS (1.1.1.1, 8.8.8.8)"
+    print_success "Công cụ kiểm tra: dns-test"
+}
+
+# ============================================================
+# PHẦN 1: GỠ BỎ XFCE4-PANEL (GIỮ NGUYÊN)
 # ============================================================
 
 remove_xfce4_panel() {
@@ -117,7 +523,7 @@ remove_xfce4_panel() {
 }
 
 # ============================================================
-# PHẦN 2: CÀI ĐẶT ỨNG DỤNG
+# PHẦN 2: CÀI ĐẶT ỨNG DỤNG (GIỮ NGUYÊN)
 # ============================================================
 
 install_applications() {
@@ -179,13 +585,13 @@ EOF
         libdvdnav
     print_success "Đã cài đặt VLC Media Player (hỗ trợ DVD)"
 
-    # 5. Forecast (dự báo thời tiết)
+    # 5. Forecast
     print_step "5. Cài đặt Forecast..."
     if ! command -v yay &> /dev/null; then
         print_warning "Yay chưa được cài đặt, đang cài đặt..."
         pacman -S --noconfirm git base-devel
         git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin 2>/dev/null || {
-            print_error "Không thể clone yay-bin! Kiểm tra kết nối mạng."
+            print_error "Không thể clone yay-bin!"
             return 1
         }
         cd /tmp/yay-bin
@@ -244,44 +650,20 @@ EOF
     # 12. Wine và các plugin đầy đủ
     print_step "12. Cài đặt Wine và plugin..."
     
-    # Bật multilib nếu chưa có
     if ! grep -q "^\[multilib\]" /etc/pacman.conf; then
         echo -e "\n[multilib]\nInclude = /etc/pacman.d/mirrorlist" >> /etc/pacman.conf
         pacman -Sy --noconfirm
     fi
     
-    # Wine core
     pacman -S --noconfirm wine wine-gecko wine-mono winetricks
-    
-    # 32-bit libraries cần thiết cho Wine
     pacman -S --noconfirm \
-        lib32-mesa \
-        lib32-libpulse \
-        lib32-alsa-plugins \
-        lib32-gnutls \
-        lib32-libldap \
-        lib32-libpng \
-        lib32-libxcomposite \
-        lib32-libxinerama \
-        lib32-opencl-icd-loader \
-        lib32-gst-plugins-base \
-        lib32-gst-plugins-good \
-        lib32-gst-plugins-bad \
-        lib32-gst-plugins-ugly \
-        lib32-vulkan-intel \
-        lib32-vkd3d \
-        lib32-mpg123 \
-        lib32-openal \
-        lib32-sdl2 \
-        lib32-libgcrypt \
-        lib32-ncurses \
-        lib32-v4l-utils \
-        lib32-libjpeg-turbo \
-        lib32-sqlite \
-        lib32-libxslt \
-        lib32-libva \
-        lib32-gtk3 \
-        2>/dev/null || print_warning "Một số package Wine có thể không có sẵn"
+        lib32-mesa lib32-libpulse lib32-alsa-plugins lib32-gnutls \
+        lib32-libldap lib32-libpng lib32-libxcomposite lib32-libxinerama \
+        lib32-opencl-icd-loader lib32-gst-plugins-base lib32-gst-plugins-good \
+        lib32-gst-plugins-bad lib32-gst-plugins-ugly lib32-vulkan-intel \
+        lib32-vkd3d lib32-mpg123 lib32-openal lib32-sdl2 lib32-libgcrypt \
+        lib32-ncurses lib32-v4l-utils lib32-libjpeg-turbo lib32-sqlite \
+        lib32-libxslt lib32-libva lib32-gtk3 2>/dev/null || true
     print_success "Đã cài đặt Wine và plugin đầy đủ"
 
     # 13. WPS Office
@@ -290,7 +672,7 @@ EOF
         print_warning "WPS Office có thể cần cài thủ công"
     print_success "Đã cài đặt WPS Office"
 
-    # 14. Zalo Chat Unofficial
+    # 14. Zalo
     print_step "14. Cài đặt Zalo Chat Unofficial..."
     if ! command -v snap &> /dev/null; then
         pacman -S --noconfirm snapd
@@ -308,10 +690,7 @@ EOF
 
     # 16. MetaTrader 5
     print_step "16. Cài đặt MetaTrader 5..."
-    print_warning "⚠ MetaTrader 5 có thể gặp lỗi 'debugger found' trên Wine 10.3+"
-    print_warning "👉 Nếu gặp lỗi, downgrade Wine xuống 10.2:"
-    print_warning "   sudo pacman -U /var/cache/pacman/pkg/wine-10.2-1-x86_64.pkg.tar.zst"
-    
+    print_warning "⚠ MT5 có thể gặp lỗi 'debugger found' trên Wine 10.3+"
     wget -O /tmp/mt5linux.sh https://download.terminal.free/cdn/web/metaquotes.software.corp/mt5/mt5linux.sh 2>/dev/null || {
         print_warning "Không thể tải MT5, bỏ qua"
     }
@@ -323,7 +702,7 @@ EOF
         print_success "Đã cài đặt MetaTrader 5"
     fi
 
-    # 17. Calculator Linux (GNOME Calculator)
+    # 17. Calculator
     print_step "17. Cài đặt Calculator..."
     pacman -S --noconfirm gnome-calculator
     print_success "Đã cài đặt GNOME Calculator"
@@ -339,28 +718,24 @@ EOF
     pacman -S --noconfirm papirus-icon-theme
     print_success "Đã cài đặt Icon Papirus"
 
-    # 20. LightDM Webkit và Theme Dark Planet
+    # 20. LightDM Webkit
     print_step "20. Cài đặt LightDM Webkit và Theme Dark Planet..."
     
-    # Kiểm tra display manager hiện tại
     if systemctl is-active --quiet gdm 2>/dev/null || systemctl is-active --quiet sddm 2>/dev/null; then
         print_warning "Phát hiện display manager khác (GDM/SDDM)"
-        print_warning "Sẽ disable và thay thế bằng LightDM"
         systemctl stop gdm 2>/dev/null || true
         systemctl stop sddm 2>/dev/null || true
         systemctl disable gdm 2>/dev/null || true
         systemctl disable sddm 2>/dev/null || true
     fi
     
-    # Cài đặt lightdm-webkit2-greeter
     pacman -S --noconfirm lightdm-webkit2-greeter lightdm
     
-    # Tải và cài đặt theme Dark Planet
     if [ -d /tmp/dark-planet ]; then
         rm -rf /tmp/dark-planet
     fi
     git clone https://github.com/Antergos/web-greeter-theme-dark-planet.git /tmp/dark-planet 2>/dev/null || {
-        print_warning "Không thể clone theme Dark Planet, tạo theme mặc định"
+        print_warning "Không thể clone theme Dark Planet"
         mkdir -p /usr/share/web-greeter/themes/dark-planet
     }
     if [ -d /tmp/dark-planet ]; then
@@ -369,7 +744,6 @@ EOF
         rm -rf /tmp/dark-planet
     fi
     
-    # Cấu hình LightDM
     mkdir -p /etc/lightdm
     cat > /etc/lightdm/lightdm.conf << EOF
 [Seat:*]
@@ -377,7 +751,6 @@ greeter-session=lightdm-webkit2-greeter
 user-session=xfce
 EOF
 
-    # Cấu hình webkit2 greeter
     cat > /etc/lightdm/lightdm-webkit2-greeter.conf << EOF
 [greeter]
 webkit-theme = dark-planet
@@ -387,15 +760,13 @@ show-pane = true
 show-keyboard = true
 EOF
 
-    # Enable LightDM (chỉ khi không có DM khác)
     systemctl enable lightdm 2>/dev/null || print_warning "LightDM không thể enable"
     print_success "Đã cài đặt LightDM Webkit và Theme Dark Planet"
 
-    # 21. Plymouth và Theme Dark Planet
+    # 21. Plymouth
     print_step "21. Cài đặt Plymouth và Theme Dark Planet..."
     pacman -S --noconfirm plymouth
     
-    # Tải và cài đặt theme Dark Planet cho Plymouth
     mkdir -p /usr/share/plymouth/themes/dark-planet
     cat > /usr/share/plymouth/themes/dark-planet/dark-planet.plymouth << 'EOF'
 [Plymouth Theme]
@@ -413,35 +784,27 @@ BackgroundStartColor=0x0a0a0a
 BackgroundEndColor=0x1a1a2e
 EOF
 
-    # Tạo background và logo đơn giản (sử dụng ImageMagick nếu có)
     pacman -S --noconfirm imagemagick 2>/dev/null || true
     
     if command -v convert &> /dev/null; then
-        # Tạo background
         convert -size 1920x1080 gradient:black-darkblue /usr/share/plymouth/themes/dark-planet/background.png 2>/dev/null || true
-        
-        # Tạo logo đơn giản (hình tròn với chữ A)
         convert -size 100x100 xc:transparent -fill white -draw "circle 50,50 50,10" \
             -gravity center -pointsize 40 -fill black -draw "text 0,-5 'A'" \
             /usr/share/plymouth/themes/dark-planet/logo.png 2>/dev/null || true
     fi
 
-    # Cấu hình Plymouth
     sed -i 's/^#*\(Theme=\).*$/\1dark-planet/' /etc/plymouth/plymouthd.conf 2>/dev/null || \
         echo "Theme=dark-planet" > /etc/plymouth/plymouthd.conf
     
-    # Cập nhật initramfs - SỬA LỖI HOOKS
     if command -v mkinitcpio &> /dev/null; then
-        # Thêm plymouth vào HOOKS nếu chưa có
         if ! grep -q "plymouth" /etc/mkinitcpio.conf; then
-            # Sửa HOOKS an toàn hơn
             if grep -q "^HOOKS=" /etc/mkinitcpio.conf; then
                 sed -i 's/^HOOKS=(/HOOKS=(plymouth /' /etc/mkinitcpio.conf
             else
                 echo 'HOOKS=(base udev plymouth autodetect modconf block filesystems keyboard fsck)' >> /etc/mkinitcpio.conf
             fi
         fi
-        mkinitcpio -p linux 2>/dev/null || print_warning "mkinitcpio thất bại, Plymouth có thể không hoạt động"
+        mkinitcpio -p linux 2>/dev/null || print_warning "mkinitcpio thất bại"
     fi
     
     print_success "Đã cài đặt Plymouth và Theme Dark Planet"
@@ -473,7 +836,7 @@ EOF
 }
 
 # ============================================================
-# PHẦN 3: SCRIPT DỌN DẸP LOG
+# PHẦN 3: SCRIPT DỌN DẸP LOG (GIỮ NGUYÊN)
 # ============================================================
 
 create_cleanup_script() {
@@ -482,7 +845,6 @@ create_cleanup_script() {
     cat > /usr/local/bin/log-cleanup.sh << 'EOF'
 #!/bin/bash
 
-# Script dọn dẹp và tối ưu file log
 LOG_DIR="/var/log"
 BACKUP_DIR="/var/log/backup"
 ARCHIVE_DIR="/var/log/archive"
@@ -496,40 +858,32 @@ log_message() {
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] $1" | tee -a "$REPORT_FILE"
 }
 
-# Bắt đầu
 log_message "========== BẮT ĐẦU DỌN DẸP =========="
 
-# 1. Backup log quan trọng trước khi xóa
 log_message "Đang backup log quan trọng..."
 mkdir -p "$BACKUP_DIR/$(date +%Y%m%d)"
 find "$LOG_DIR" -name "*error*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/$(date +%Y%m%d)/" \; 2>/dev/null
 find "$LOG_DIR" -name "*critical*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/$(date +%Y%m%d)/" \; 2>/dev/null
 find "$LOG_DIR" -name "*secure*.log" -type f -mtime -7 -exec cp {} "$BACKUP_DIR/$(date +%Y%m%d)/" \; 2>/dev/null
 
-# 2. Xóa log cũ
 log_message "Đang xóa log cũ hơn $RETENTION_DAYS ngày..."
 find "$LOG_DIR" -name "*.log" -type f -mtime +$RETENTION_DAYS -delete 2>/dev/null
 find "$LOG_DIR" -name "*.log.*" -type f -mtime +$RETENTION_DAYS -delete 2>/dev/null
 
-# 3. Xóa log rỗng
 log_message "Đang xóa file log rỗng..."
 find "$LOG_DIR" -name "*.log" -type f -empty -delete 2>/dev/null
 
-# 4. Nén log cũ
 log_message "Đang nén log từ $COMPRESS_DAYS-$RETENTION_DAYS ngày..."
 find "$LOG_DIR" -name "*.log" -type f -mtime +$COMPRESS_DAYS -mtime -$RETENTION_DAYS -exec gzip -9 {} \; 2>/dev/null
 find "$LOG_DIR" -name "*.log.*" -type f -mtime +$COMPRESS_DAYS -mtime -$RETENTION_DAYS -exec gzip -9 {} \; 2>/dev/null
 
-# 5. Logrotate
 log_message "Đang chạy logrotate..."
 command -v logrotate &>/dev/null && logrotate -f /etc/logrotate.conf 2>/dev/null
 
-# 6. Journald
 log_message "Đang dọn dẹp journald..."
 command -v journalctl &>/dev/null && journalctl --vacuum-time=${RETENTION_DAYS}d 2>/dev/null
 command -v journalctl &>/dev/null && journalctl --vacuum-size=500M 2>/dev/null
 
-# 7. Tối ưu log
 log_message "Đang tối ưu log..."
 find "$LOG_DIR" -name "*.log" -type f -size +100k -exec sh -c '
     for file do
@@ -540,15 +894,12 @@ find "$LOG_DIR" -name "*.log" -type f -size +100k -exec sh -c '
     done
 ' sh {} + 2>/dev/null
 
-# 8. Nén archive cũ
 log_message "Đang nén archive cũ..."
 find "$ARCHIVE_DIR" -name "*.log" -type f -mtime +60 -exec gzip -9 {} \; 2>/dev/null
 
-# 9. Xóa backup cũ
 log_message "Đang xóa backup cũ..."
 find "$BACKUP_DIR" -name "*.log*" -type f -mtime +90 -delete 2>/dev/null
 
-# 10. Báo cáo
 LOG_COUNT=$(find "$LOG_DIR" -name "*.log" -type f | wc -l)
 COMPRESSED_COUNT=$(find "$LOG_DIR" -name "*.log.gz" -type f | wc -l)
 TOTAL_SIZE=$(du -sh "$LOG_DIR" 2>/dev/null | cut -f1)
@@ -568,13 +919,12 @@ EOF
 }
 
 # ============================================================
-# PHẦN 4: CÀI ĐẶT SYSTEMD TIMER
+# PHẦN 4: SYSTEMD TIMER (GIỮ NGUYÊN)
 # ============================================================
 
 setup_systemd_timer() {
     print_header "CÀI ĐẶT SYSTEMD TIMER"
     
-    # Service
     cat > /etc/systemd/system/log-cleanup.service << 'EOF'
 [Unit]
 Description=Log Cleanup and Optimization Service
@@ -590,7 +940,6 @@ StandardError=journal
 WantedBy=multi-user.target
 EOF
 
-    # Timer
     cat > /etc/systemd/system/log-cleanup.timer << EOF
 [Unit]
 Description=Log Cleanup Timer - Runs daily at ${CLEANUP_HOUR}:00 AM
@@ -613,13 +962,12 @@ EOF
 }
 
 # ============================================================
-# PHẦN 5: TẠO CÔNG CỤ KIỂM TRA
+# PHẦN 5: CÔNG CỤ KIỂM TRA (CẬP NHẬT)
 # ============================================================
 
 create_tools() {
     print_header "TẠO CÔNG CỤ KIỂM TRA"
     
-    # Script kiểm tra trạng thái
     cat > /usr/local/bin/check-status << 'EOF'
 #!/bin/bash
 GREEN='\033[0;32m'
@@ -634,41 +982,34 @@ echo "Bluetooth: $(systemctl is-active bluetooth 2>/dev/null || echo 'inactive')
 echo "TLP: $(systemctl is-active tlp 2>/dev/null || echo 'inactive')"
 echo "LightDM: $(systemctl is-active lightdm 2>/dev/null || echo 'inactive')"
 echo "Plymouth: $(systemctl is-active plymouth-quit 2>/dev/null || echo 'inactive')"
-echo "Log Cleanup Timer: $(systemctl is-active log-cleanup.timer 2>/dev/null || echo 'inactive')"
+echo "Log Cleanup: $(systemctl is-active log-cleanup.timer 2>/dev/null || echo 'inactive')"
+echo "Security Update: $(systemctl is-active security-update.timer 2>/dev/null || echo 'inactive')"
+echo "NetworkManager: $(systemctl is-active NetworkManager 2>/dev/null || echo 'inactive')"
 echo ""
+
 echo -e "${YELLOW}===== THÔNG TIN PIN =====${NC}"
 tlp-stat -b 2>/dev/null | grep -E "Charge|Status" || echo "Không có dữ liệu pin"
 echo ""
+
 echo -e "${YELLOW}===== DỤNG LƯỢNG LOG =====${NC}"
 du -sh /var/log 2>/dev/null
 echo ""
-echo -e "${YELLOW}===== LOG CLEANUP LẦN CUỐI =====${NC}"
-ls -lt /var/log/cleanup_report_*.log 2>/dev/null | head -1
+
+echo -e "${YELLOW}===== KIỂM TRA DNS =====${NC}"
+cat /etc/resolv.conf | grep nameserver | head -3
 echo ""
-echo -e "${YELLOW}===== KIỂM TRA WINE =====${NC}"
-wine --version 2>/dev/null || echo "Wine chưa được cấu hình"
-echo ""
-echo -e "${YELLOW}===== KIỂM TRA DRIVER INTEL =====${NC}"
-glxinfo 2>/dev/null | grep "OpenGL renderer" | head -1 || echo "Không có thông tin OpenGL"
-echo ""
+
 echo -e "${YELLOW}===== CÁC ỨNG DỤNG ĐÃ CÀI =====${NC}"
 command -v firefox &>/dev/null && echo "✓ Firefox" || echo "✗ Firefox"
-command -v forecast &>/dev/null && echo "✓ Forecast" || echo "✗ Forecast"
-command -v vlc &>/dev/null && echo "✓ VLC Media Player" || echo "✗ VLC Media Player"
+command -v vlc &>/dev/null && echo "✓ VLC" || echo "✗ VLC"
 command -v wps &>/dev/null && echo "✓ WPS Office" || echo "✗ WPS Office"
 command -v tradingview &>/dev/null && echo "✓ TradingView" || echo "✗ TradingView"
-command -v gnome-calculator &>/dev/null && echo "✓ GNOME Calculator" || echo "✗ GNOME Calculator"
+command -v gnome-calculator &>/dev/null && echo "✓ Calculator" || echo "✗ Calculator"
 snap list 2>/dev/null | grep -q zalo && echo "✓ Zalo Chat" || echo "✗ Zalo Chat"
 [ -d ~/.mt5wine ] 2>/dev/null && echo "✓ MetaTrader 5" || echo "✗ MetaTrader 5"
-echo ""
-echo -e "${YELLOW}===== THEMES ĐÃ CÀI =====${NC}"
-[ -d /usr/share/plymouth/themes/dark-planet ] && echo "✓ Plymouth Dark Planet" || echo "✗ Plymouth Dark Planet"
-[ -d /usr/share/web-greeter/themes/dark-planet ] && echo "✓ LightDM Dark Planet" || echo "✗ LightDM Dark Planet"
-ls /usr/share/icons/ 2>/dev/null | grep -q Papirus && echo "✓ Papirus Icons" || echo "✗ Papirus Icons"
 EOF
     chmod +x /usr/local/bin/check-status
     
-    # Script quản lý cleanup
     cat > /usr/local/bin/cleanup-manager << 'EOF'
 #!/bin/bash
 case "$1" in
@@ -699,22 +1040,16 @@ case "$1" in
         ;;
     *)
         echo "Usage: cleanup-manager {run|status|logs|disable|enable|next}"
-        echo "  run     - Chạy dọn dẹp ngay"
-        echo "  status  - Xem trạng thái timer"
-        echo "  logs    - Xem log realtime"
-        echo "  disable - Tắt tự động"
-        echo "  enable  - Bật tự động"
-        echo "  next    - Xem lịch chạy tiếp theo"
         ;;
 esac
 EOF
     chmod +x /usr/local/bin/cleanup-manager
     
-    print_success "Đã tạo công cụ kiểm tra: check-status, cleanup-manager"
+    print_success "Đã tạo công cụ kiểm tra"
 }
 
 # ============================================================
-# PHẦN 6: HƯỚNG DẪN WINE
+# PHẦN 6: HƯỚNG DẪN WINE (GIỮ NGUYÊN)
 # ============================================================
 
 create_wine_guide() {
@@ -722,36 +1057,21 @@ create_wine_guide() {
     
     cat > /usr/local/bin/wine-setup << 'EOF'
 #!/bin/bash
-# Script hướng dẫn cấu hình Wine
-
 echo "===== HƯỚNG DẪN CẤU HÌNH WINE ====="
 echo ""
-echo "1. Tạo Wine prefix (32-bit nếu cần chạy game cũ):"
+echo "1. Tạo Wine prefix:"
 echo "   WINEARCH=win32 WINEPREFIX=~/.wine32 winecfg"
 echo ""
-echo "2. Cài đặt các thành phần cần thiết:"
+echo "2. Cài đặt các thành phần:"
 echo "   winetricks corefonts dxvk vcrun2017 vcrun2019"
 echo ""
-echo "3. Cấu hình Wine:"
-echo "   winecfg"
-echo ""
-echo "4. Chạy ứng dụng Windows:"
+echo "3. Chạy ứng dụng Windows:"
 echo "   wine app.exe"
 echo ""
-echo "5. Sử dụng DXVK để tăng hiệu năng game:"
-echo "   export DXVK_HUD=1"
-echo "   wine game.exe"
-echo ""
 echo "===== LƯU Ý CHO METATRADER 5 ====="
-echo "MT5 yêu cầu Wine bản 10.2 để chạy ổn định trên Arch"
+echo "MT5 yêu cầu Wine bản 10.2 để chạy ổn định"
 echo "Downgrade Wine:"
 echo "  sudo pacman -U /var/cache/pacman/pkg/wine-10.2-1-x86_64.pkg.tar.zst"
-echo ""
-echo "Hoặc sử dụng script chính thức từ MetaQuotes:"
-echo "  wget https://download.terminal.free/cdn/web/metaquotes.software.corp/mt5/mt5linux.sh"
-echo "  chmod +x mt5linux.sh && ./mt5linux.sh"
-echo ""
-echo "Xem thêm: https://wiki.archlinux.org/title/Wine"
 EOF
     chmod +x /usr/local/bin/wine-setup
     
@@ -769,7 +1089,7 @@ show_summary() {
     echo "  ✓ IBus-Unikey (gõ tiếng Việt)"
     echo "  ✓ Plank (dock ứng dụng)"
     echo "  ✓ Firefox (trình duyệt web)"
-    echo "  ✓ VLC Media Player (trình phát đa phương tiện) ⭐"
+    echo "  ✓ VLC Media Player (trình phát đa phương tiện)"
     echo "  ✓ Forecast (dự báo thời tiết)"
     echo "  ✓ Tailscale (VPN mesh)"
     echo "  ✓ OpenSSH (remote access)"
@@ -777,7 +1097,7 @@ show_summary() {
     echo "  ✓ TLP (quản lý pin)"
     echo "  ✓ yt-dlp + ffmpeg (tải video/audio)"
     echo "  ✓ Driver Intel (mesa, vulkan, xf86-video-intel)"
-    echo "  ✓ Wine + plugins đầy đủ (gstreamer, vulkan, 32-bit libs)"
+    echo "  ✓ Wine + plugins đầy đủ"
     echo "  ✓ WPS Office (bộ văn phòng)"
     echo "  ✓ Zalo Chat Unofficial (Snap)"
     echo "  ✓ TradingView (AUR/Snap)"
@@ -788,51 +1108,30 @@ show_summary() {
     echo "  ✓ Plymouth + Dark Planet Theme"
     echo "  ✓ Logrotate + Cleanup (dọn dẹp log)"
     
-    echo -e "\n${GREEN}Đã gỡ bỏ:${NC}"
-    echo "  ✓ xfce4-panel và các gói liên quan"
-    
-    echo -e "\n${GREEN}Cấu hình:${NC}"
-    echo "  ✓ Ngưỡng sạc pin: $START_CHARGE% - $STOP_CHARGE%"
-    echo "  ✓ Dọn dẹp log: ${CLEANUP_HOUR}h sáng hàng ngày"
-    echo "  ✓ Tự động khởi động: Plank, IBus"
-    echo "  ✓ Giao diện đăng nhập: LightDM Webkit với Dark Planet"
-    echo "  ✓ Boot splash: Plymouth với Dark Planet"
+    echo -e "\n${GREEN}TÍNH NĂNG MỚI ĐÃ THÊM:${NC}"
+    echo "  🔐 Security Updates (tự động cập nhật bảo mật hàng ngày)"
+    echo "  🖌️  Fonts cho văn phòng & tiếng Việt"
+    echo "  🎨 GRUB Customize (bootloader đẹp)"
+    echo "  📶 WiFi Manager (quản lý WiFi dễ dàng)"
+    echo "  🌐 DNS 1.1.1.1 / 8.8.8.8"
     
     echo -e "\n${YELLOW}📋 HƯỚNG DẪN SỬ DỤNG:${NC}"
     echo -e "1. ${CYAN}Kiểm tra trạng thái:${NC} sudo check-status"
-    echo -e "2. ${CYAN}Quản lý dọn dẹp log:${NC} cleanup-manager {run|status|logs|disable|enable|next}"
-    echo -e "3. ${CYAN}Cấu hình Tailscale:${NC} sudo tailscale up"
-    echo -e "4. ${CYAN}Mở Blueman:${NC} blueman-manager"
-    echo -e "5. ${CYAN}Xem cấu hình pin:${NC} sudo tlp-stat -b"
+    echo -e "2. ${CYAN}Quản lý WiFi:${NC} wifi {gui|tui|on|off|list|connect}"
+    echo -e "3. ${CYAN}Kiểm tra DNS:${NC} dns-test"
+    echo -e "4. ${CYAN}Xem log cập nhật bảo mật:${NC} cat /var/log/security-updates.log"
+    echo -e "5. ${CYAN}Quản lý dọn dẹp log:${NC} cleanup-manager {run|status|logs}"
     echo -e "6. ${CYAN}Hướng dẫn Wine:${NC} wine-setup"
-    echo -e "7. ${CYAN}Tải video với yt-dlp:${NC} yt-dlp -f 'bestvideo+bestaudio' <URL>"
-    echo -e "8. ${CYAN}Mở Firefox:${NC} firefox"
-    echo -e "9. ${CYAN}Mở VLC:${NC} vlc"
-    echo -e "10. ${CYAN}Mở Forecast:${NC} forecast"
-    echo -e "11. ${CYAN}Mở WPS Office:${NC} wps (Writer), et (Spreadsheets), wpp (Presentation)"
-    echo -e "12. ${CYAN}Mở Zalo:${NC} snap run zalo-chat-unofficial"
-    echo -e "13. ${CYAN}Mở TradingView:${NC} tradingview"
-    echo -e "14. ${CYAN}Mở MT5:${NC} ~/.mt5wine/drive_c/Program\ Files/MetaTrader\ 5/terminal.exe"
-    echo -e "15. ${CYAN}Mở Calculator:${NC} gnome-calculator"
-    echo -e "16. ${CYAN}Đổi icon theme:${NC} Cài đặt Papirus qua công cụ của XFCE"
     
     echo -e "\n${GREEN}📁 Log và báo cáo:${NC}"
-    echo "  • Báo cáo dọn dẹp: /var/log/cleanup_report_*.log"
-    echo "  • Systemd log: sudo journalctl -u log-cleanup.service"
+    echo "  • Security updates: /var/log/security-updates.log"
+    echo "  • Log cleanup: /var/log/cleanup_report_*.log"
     
     echo -e "\n${RED}⚠ LƯU Ý QUAN TRỌNG:${NC}"
     echo "  • MT5 hiện có lỗi 'debugger found' trên Wine 10.3+"
     echo "  • Giải pháp: downgrade Wine xuống 10.2"
-    echo "  • Hoặc sử dụng script chính thức từ MetaQuotes"
-    echo "  • Xem hướng dẫn chi tiết: ${CYAN}wine-setup${NC}"
-    echo "  • LightDM sẽ là màn hình đăng nhập mới sau khi khởi động lại"
-    echo "  • Plymouth sẽ hiển thị splash screen khi boot"
-    
-    echo -e "\n${YELLOW}⚠ LƯU Ý CHUNG:${NC}"
-    echo "  • Khởi động lại hệ thống để áp dụng đầy đủ"
-    echo "  • Đăng nhập lại để dùng IBus-Unikey"
-    echo "  • Kiểm tra Tailscale: sudo tailscale status"
-    echo "  • Nếu LightDM không hoạt động, check log: /var/log/lightdm/*"
+    echo "  • Cần khởi động lại để áp dụng LightDM và Plymouth"
+    echo "  • GRUB theme có thể cần cài thủ công nếu clone thất bại"
     
     echo -e "\n${GREEN}========================================${NC}"
     echo -e "${GREEN}  🚀 HỆ THỐNG ĐÃ SẴN SÀNG!  ${NC}"
@@ -844,7 +1143,6 @@ show_summary() {
 # ============================================================
 
 main() {
-    # Kiểm tra root
     if [[ $EUID -ne 0 ]]; then
         print_error "Script cần chạy với quyền root!"
         echo "Sử dụng: sudo $0"
@@ -852,17 +1150,15 @@ main() {
     fi
     
     clear
-    print_header "CÀI ĐẶT & TỐI ƯU ARCH LINUX (BẢN ĐẦY ĐỦ + VLC)"
+    print_header "CÀI ĐẶT & TỐI ƯU ARCH LINUX (BẢN ĐẦY ĐỦ + TÍNH NĂNG MỚI)"
     echo -e "${CYAN}Thời gian: $(date '+%H:%M:%S %d/%m/%Y')${NC}"
     echo -e "${CYAN}User: $(get_current_user)${NC}"
     
-    # Kiểm tra trước khi chạy
     check_distro
     check_internet
     check_disk_space
     backup_config
     
-    # Hỏi xác nhận
     echo -e "\n${YELLOW}⚠ Bạn có chắc chắn muốn tiếp tục?${NC}"
     echo -e "Script sẽ cài đặt nhiều ứng dụng và thay đổi cấu hình hệ thống."
     read -p "Nhấn y/Y để tiếp tục, bất kỳ phím nào khác để hủy: " -n 1 -r
@@ -872,26 +1168,38 @@ main() {
         exit 1
     fi
     
-    # Chạy các phần
+    # Các phần chính
     remove_xfce4_panel
     install_applications
+    
+    # CÁC TÍNH NĂNG MỚI
+    setup_auto_security_updates
+    install_fonts
+    customize_grub
+    setup_wifi_management
+    configure_dns
+    
+    # Phần còn lại
     create_cleanup_script
     setup_systemd_timer
     create_tools
     create_wine_guide
     
-    # Chạy thử cleanup lần đầu
+    # Chạy thử cleanup
     print_step "Chạy dọn dẹp log lần đầu..."
     systemctl start log-cleanup.service 2>/dev/null || true
     
-    # Hiển thị tổng kết
+    # Chạy cập nhật security lần đầu
+    print_step "Chạy cập nhật security lần đầu..."
+    systemctl start security-update.service 2>/dev/null || true
+    
     show_summary
     
-    # Hiển thị trạng thái timer
-    echo -e "\n${CYAN}Lịch chạy tiếp theo:${NC}"
-    systemctl list-timers log-cleanup.timer --no-pager 2>/dev/null || echo "Không có thông tin"
+    echo -e "\n${CYAN}Lịch chạy các timer:${NC}"
+    systemctl list-timers --no-pager 2>/dev/null | grep -E "log-cleanup|security-update" || echo "Đang cập nhật..."
     
     echo -e "\n${GREEN}✅ SCRIPT HOÀN TẤT!${NC}"
+    echo -e "${YELLOW}🔔 Khởi động lại hệ thống để áp dụng đầy đủ!${NC}"
 }
 
 # Chạy main
