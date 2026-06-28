@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Arch Linux](https://img.shields.io/badge/Arch_Linux-1793D1?style=flat&logo=arch-linux&logoColor=white)](https://archlinux.org/)
 [![Bash](https://img.shields.io/badge/Bash-4.4+-4EAA25?style=flat&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 > **Một script tự động hóa toàn diện để cài đặt và tối ưu Arch Linux với đầy đủ ứng dụng văn phòng, đồ họa, và tính năng bảo mật.**
 
@@ -18,6 +19,8 @@
 - [Hướng Dẫn Sử Dụng](#-hướng-dẫn-sử-dụng)
 - [Khắc Phục Sự Cố](#-khắc-phục-sự-cố)
 - [Cấu Trúc Script](#-cấu-trúc-script)
+- [Đóng Góp](#-đóng-góp)
+- [Giấy Phép](#-giấy-phép)
 
 ---
 
@@ -47,7 +50,7 @@ Script này được thiết kế để tự động hóa quá trình cài đặ
 ### 📦 Ứng Dụng Được Cài Đặt
 
 <details>
-<summary><b>Xem danh sách đầy đủ (22 ứng dụng)</b></summary>
+<summary><b>📌 Nhấn để xem danh sách đầy đủ (22 ứng dụng)</b></summary>
 
 | # | Ứng Dụng | Mục Đích |
 |---|----------|----------|
@@ -78,10 +81,17 @@ Script này được thiết kế để tự động hóa quá trình cài đặ
 
 ### 🔧 Công Cụ Hệ Thống
 
+<details>
+<summary><b>📌 Nhấn để xem công cụ hệ thống</b></summary>
+
 - **Security Updates**: Tự động cập nhật hàng ngày
 - **Log Cleanup**: Dọn dẹp log theo lịch trình
 - **DNS Test**: Kiểm tra độ trễ DNS
 - **Status Check**: Kiểm tra trạng thái services
+- **WiFi Manager**: Quản lý WiFi đa năng
+- **GRUB Customizer**: Tùy chỉnh bootloader
+
+</details>
 
 ---
 
@@ -104,16 +114,17 @@ Script này được thiết kế để tự động hóa quá trình cài đặ
 ```bash
 git clone https://github.com/yourusername/arch-setup-script.git
 cd arch-setup-script
-### 2. Chạy Script
+
+2. Chạy Script
 bash
 
 chmod +x arch-setup.sh
 sudo ./arch-setup.sh
 
-### 3. Xác Nhận
+3. Xác Nhận
 
 Script sẽ hỏi xác nhận trước khi bắt đầu. Nhấn y để tiếp tục.
-## Các Tính Năng Chi Tiết
+📚 Các Tính Năng Chi Tiết
 🛡️ 1. Tự Động Cập Nhật Bảo Mật
 
 Script cài đặt systemd timer chạy hàng ngày lúc 2h sáng:
@@ -218,29 +229,29 @@ fc-cache -fv
 # Xem danh sách font đã cài
 fc-list | grep -E "DejaVu|Noto|Roboto"
 
-## Khắc Phục Sự Cố
-❌ Lỗi: "Script chỉ chạy trên Arch Linux"
+🐛 Khắc Phục Sự Cố
+<details> <summary><b>❌ Lỗi: "Script chỉ chạy trên Arch Linux"</b></summary>
 
 Giải pháp: Đảm bảo bạn đang sử dụng Arch Linux
 bash
 
 cat /etc/os-release | grep ID
 
-❌ Lỗi: "Không có kết nối Internet"
+</details><details> <summary><b>❌ Lỗi: "Không có kết nối Internet"</b></summary>
 
 Giải pháp: Kiểm tra kết nối mạng
 bash
 
 ping -c 3 archlinux.org
 
-❌ Lỗi: "Dung lượng đĩa còn < 10GB"
+</details><details> <summary><b>❌ Lỗi: "Dung lượng đĩa còn < 10GB"</b></summary>
 
 Giải pháp: Dọn dẹp hoặc mở rộng phân vùng
 bash
 
 df -h /
 
-❌ GRUB không cập nhật được
+</details><details> <summary><b>❌ GRUB không cập nhật được</b></summary>
 
 Giải pháp: Chạy thủ công
 bash
@@ -248,7 +259,7 @@ bash
 sudo grub-mkconfig -o /boot/grub/grub.cfg
 sudo grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 
-❌ LightDM không hiển thị theme đẹp
+</details><details> <summary><b>❌ LightDM không hiển thị theme đẹp</b></summary>
 
 Giải pháp:
 bash
@@ -259,14 +270,16 @@ ls -la /usr/share/web-greeter/themes/dark-planet/
 # Kiểm tra cấu hình
 cat /etc/lightdm/lightdm-webkit2-greeter.conf
 
-❌ Wine MT5 lỗi "debugger found"
+</details><details> <summary><b>❌ Wine MT5 lỗi "debugger found"</b></summary>
 
 Giải pháp: Đọc hướng dẫn chi tiết trong wine-setup
 bash
 
 wine-setup
 
+</details>
 📁 Cấu Trúc Script
+<details> <summary><b>📌 Nhấn để xem cấu trúc chi tiết</b></summary>
 text
 
 arch-setup.sh
@@ -291,9 +304,41 @@ arch-setup.sh
 └── Tổng kết
     └── show_summary                    # Báo cáo cài đặt
 
+</details>
+🤝 Đóng Góp
+
+Mọi đóng góp đều được chào đón!
+
+    Fork repository
+
+    Tạo branch mới: git checkout -b feature/AmazingFeature
+
+    Commit changes: git commit -m 'Add some AmazingFeature'
+
+    Push lên branch: git push origin feature/AmazingFeature
+
+    Mở Pull Request
+
+📝 Hướng Dẫn Đóng Góp
+
+    Bug Reports: Mở issue với mô tả chi tiết và log
+
+    Feature Requests: Mô tả tính năng mới và lợi ích
+
+    Code: Tuân thủ coding style hiện tại
+
+📄 Giấy Phép
+
+Dự án được phân phối dưới giấy phép MIT. Xem file LICENSE để biết thêm chi tiết.
 ⚠️ Tuyên Bố Miễn Trách
 
 Script này được cung cấp "như hiện tại", không có bất kỳ bảo đảm nào. Người dùng chịu trách nhiệm cho mọi thay đổi được thực hiện trên hệ thống của họ.
-📞 Liên Hệ 
+📞 Liên Hệ
 
-    Tác Giả: Khoa Phan
+    Tác Giả: Your Name
+
+    Issue Tracker: GitHub Issues
+
+    Wiki: Documentation
+
+<div align="center"> <sub>Built with ❤️ for the Arch Linux community</sub> </div> ```
