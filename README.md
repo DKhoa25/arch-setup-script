@@ -19,10 +19,6 @@
 - [Hướng Dẫn Sử Dụng](#-hướng-dẫn-sử-dụng)
 - [Khắc Phục Sự Cố](#-khắc-phục-sự-cố)
 - [Cấu Trúc Script](#-cấu-trúc-script)
-- [Đóng Góp](#-đóng-góp)
-- [Giấy Phép](#-giấy-phép)
-
----
 
 ## 📖 Tổng Quan
 
@@ -112,7 +108,7 @@ Script này được thiết kế để tự động hóa quá trình cài đặ
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/arch-setup-script.git
+git clone https://github.com/DKhoa25/arch-setup-script.git
 cd arch-setup-script
 
 2. Chạy Script
@@ -305,29 +301,6 @@ arch-setup.sh
     └── show_summary                    # Báo cáo cài đặt
 
 </details>
-🤝 Đóng Góp
-
-Mọi đóng góp đều được chào đón!
-
-    Fork repository
-
-    Tạo branch mới: git checkout -b feature/AmazingFeature
-
-    Commit changes: git commit -m 'Add some AmazingFeature'
-
-    Push lên branch: git push origin feature/AmazingFeature
-
-    Mở Pull Request
-
-📝 Hướng Dẫn Đóng Góp
-
-    Bug Reports: Mở issue với mô tả chi tiết và log
-
-    Feature Requests: Mô tả tính năng mới và lợi ích
-
-    Code: Tuân thủ coding style hiện tại
-
-📄 Giấy Phép
 
 Dự án được phân phối dưới giấy phép MIT. Xem file LICENSE để biết thêm chi tiết.
 ⚠️ Tuyên Bố Miễn Trách
@@ -335,7 +308,7 @@ Dự án được phân phối dưới giấy phép MIT. Xem file LICENSE để 
 Script này được cung cấp "như hiện tại", không có bất kỳ bảo đảm nào. Người dùng chịu trách nhiệm cho mọi thay đổi được thực hiện trên hệ thống của họ.
 📞 Liên Hệ
 
-    Tác Giả: Your Name
+    Tác Giả: Khoa Phan
 
     Issue Tracker: GitHub Issues
 
