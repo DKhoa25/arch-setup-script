@@ -18,8 +18,6 @@
 - [Hướng Dẫn Sử Dụng](#-hướng-dẫn-sử-dụng)
 - [Khắc Phục Sự Cố](#-khắc-phục-sự-cố)
 - [Cấu Trúc Script](#-cấu-trúc-script)
-- [Đóng Góp](#-đóng-góp)
-- [Giấy Phép](#-giấy-phép)
 
 ---
 
@@ -115,7 +113,7 @@ sudo ./arch-setup.sh
 ### 3. Xác Nhận
 
 Script sẽ hỏi xác nhận trước khi bắt đầu. Nhấn y để tiếp tục.
-📚 Các Tính Năng Chi Tiết
+## Các Tính Năng Chi Tiết
 🛡️ 1. Tự Động Cập Nhật Bảo Mật
 
 Script cài đặt systemd timer chạy hàng ngày lúc 2h sáng:
@@ -220,7 +218,7 @@ fc-cache -fv
 # Xem danh sách font đã cài
 fc-list | grep -E "DejaVu|Noto|Roboto"
 
-🐛 Khắc Phục Sự Cố
+## Khắc Phục Sự Cố
 ❌ Lỗi: "Script chỉ chạy trên Arch Linux"
 
 Giải pháp: Đảm bảo bạn đang sử dụng Arch Linux
@@ -293,31 +291,6 @@ arch-setup.sh
 └── Tổng kết
     └── show_summary                    # Báo cáo cài đặt
 
-🤝 Đóng Góp
-
-Mọi đóng góp đều được chào đón!
-
-    Fork repository
-
-    Tạo branch mới: git checkout -b feature/AmazingFeature
-
-    Commit changes: git commit -m 'Add some AmazingFeature'
-
-    Push lên branch: git push origin feature/AmazingFeature
-
-    Mở Pull Request
-
-📝 Hướng Dẫn Đóng Góp
-
-    Bug Reports: Mở issue với mô tả chi tiết và log
-
-    Feature Requests: Mô tả tính năng mới và lợi ích
-
-    Code: Tuân thủ coding style hiện tại
-
-📄 Giấy Phép
-
-Dự án được phân phối dưới giấy phép MIT. Xem file LICENSE để biết thêm chi tiết.
 ⚠️ Tuyên Bố Miễn Trách
 
 Script này được cung cấp "như hiện tại", không có bất kỳ bảo đảm nào. Người dùng chịu trách nhiệm cho mọi thay đổi được thực hiện trên hệ thống của họ.
