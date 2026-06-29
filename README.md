@@ -6,110 +6,184 @@ https://img.shields.io/badge/Bash-4.4+-4EAA25?style=flat&logo=gnu-bash&logoColor
 
     Script tự động hóa cài đặt Arch Linux với đầy đủ ứng dụng văn phòng, đồ họa, giao dịch và hỗ trợ tiếng Việt.
 
-✨ Tính Năng
-🆕 Nổi Bật
+📸 Hình Ảnh Minh Họa
+Giao diện đăng nhập LightDM
+
+https://screenshots/lightdm-login.png
+Màn hình desktop Xfce4
+
+https://screenshots/xfce4-desktop.png
+GRUB Bootloader
+
+https://screenshots/grub-bootloader.png
+Plymouth Boot Splash
+
+https://screenshots/plymouth-boot.png
+✨ Tính Năng Nổi Bật
 Tính Năng	Mô Tả
 🔐 Auto Security Updates	Cập nhật bảo mật hàng ngày lúc 2h sáng
 🖌️ Fonts Đẹp	Hỗ trợ tiếng Việt, văn phòng, lập trình
 🎨 GRUB Customize	Bootloader theme Dark Planet
 📶 WiFi Manager	Quản lý WiFi qua GUI/TUI/CLI
-🌐 DNS Optimized	Cloudflare (1.1.1.1) + Google
+🌐 DNS Optimized	Cloudflare (1.1.1.1) + Google (8.8.8.8)
 🇻🇳 Wine Vietnamese	Unikey + font tiếng Việt trong Wine
-📦 Ứng Dụng (23)
+📦 Ứng Dụng Được Cài Đặt
+Văn phòng & Đồ họa
 
-    Văn phòng: WPS Office, Firefox (tiếng Việt), GNOME Calculator
+    WPS Office - Bộ văn phòng
 
-    Đồ họa: VLC, Papirus Icon Theme
+    Firefox - Trình duyệt web (bản tiếng Việt)
 
-    Giao dịch: TradingView, MetaTrader 5
+    GNOME Calculator - Máy tính
 
-    Mạng: Tailscale, OpenSSH, NetworkManager
+    VLC - Trình phát đa phương tiện + DVD
 
-    Tiện ích: Plank, yt-dlp, TLP (quản lý pin)
+    Papirus Icon Theme - Icon theme đẹp
 
-    🇻🇳 Tiếng Việt: IBus-Unikey, Unikey (Wine), fonts VNI
+Giao dịch & Mạng
 
-🔧 Công Cụ
+    TradingView - Giao dịch tài chính
 
-    Security Updates (systemd timer)
+    MetaTrader 5 - Giao dịch forex
 
-    Log Cleanup (tự động dọn log)
+    Tailscale - VPN mesh
 
-    DNS Test, Status Check
+    OpenSSH - Remote access
 
-    WiFi Manager đa năng
+    NetworkManager - Quản lý mạng
 
-    GRUB Customizer
+Tiện ích & Hệ thống
 
-    Wine Vietnamese Tools
+    Plank - Dock ứng dụng
 
-💻 Yêu Cầu
+    yt-dlp + ffmpeg - Tải video/audio
+
+    TLP - Quản lý pin (ngưỡng sạc 55-85%)
+
+    Bluetooth - BlueZ + Blueman
+
+    Logrotate - Dọn dẹp log tự động
+
+🇻🇳 Hỗ trợ tiếng Việt
+
+    IBus-Unikey - Gõ tiếng Việt cho Linux
+
+    Unikey (Wine) - Gõ tiếng Việt trong ứng dụng Windows
+
+    Fonts VNI - Font tiếng Việt đẹp
+
+💻 Yêu Cầu Hệ Thống
 Thành Phần	Yêu Cầu
 Distro	Arch Linux
 Internet	Có (để tải packages)
 Dung lượng	≥ 10GB
 Quyền	Root (sudo)
-RAM	≥ 2GB
-🚀 Cài Đặt
+RAM	≥ 2GB (khuyến nghị 4GB+)
+🚀 Cài Đặt Nhanh
 bash
 
+# Clone repository
 git clone https://github.com/DKhoa25/arch-setup-script.git
 cd arch-setup-script
+
+# Cấp quyền và chạy
 chmod +x arch-setup.sh
 sudo ./arch-setup.sh
 
-📚 Hướng Dẫn
-Công Cụ Quản Lý
+Script sẽ hỏi xác nhận trước khi bắt đầu. Nhấn y để tiếp tục.
+📚 Hướng Dẫn Sử Dụng
+Công Cụ Kiểm Tra
 bash
 
-# Kiểm tra trạng thái hệ thống
+# Kiểm tra trạng thái toàn bộ hệ thống
 sudo check-status
 
-# Quản lý WiFi
-wifi           # Xem danh sách
-wifi gui       # GUI
-wifi tui       # Terminal UI
-wifi on/off    # Bật/tắt
-wifi connect SSID [password]
-
-# DNS
+# Kiểm tra DNS
 dns-test
 
-# Log cleanup
-cleanup-manager {run|status|logs|disable|enable|next}
-
-🇻🇳 Wine Tiếng Việt
-bash
-
-# Khởi động Unikey
-unikey
-
-# Chạy ứng dụng Wine
-wine-run notepad
-wine-run "C:/Program Files/App/app.exe"
-
-# Kiểm tra cài đặt
-wine-test-vietnamese
-
-# Hướng dẫn
+# Xem hướng dẫn Wine
 wine-setup
 
+Quản Lý WiFi
+bash
+
+wifi           # Xem danh sách WiFi
+wifi gui       # Mở GUI quản lý
+wifi tui       # Mở Terminal UI (nmtui)
+wifi on/off    # Bật/tắt WiFi
+wifi list      # Liệt kê mạng WiFi
+wifi connect SSID [password]  # Kết nối WiFi
+
+Quản Lý Log
+bash
+
+cleanup-manager run     # Chạy dọn dẹp ngay
+cleanup-manager status  # Xem trạng thái timer
+cleanup-manager logs    # Xem log real-time
+cleanup-manager disable # Tắt tự động dọn
+cleanup-manager enable  # Bật tự động dọn
+cleanup-manager next    # Xem lần chạy tiếp theo
+
+🇻🇳 Gõ Tiếng Việt trong Wine
+bash
+
+# 1. Khởi động Unikey
+unikey
+
+# 2. Chạy ứng dụng Wine với tiếng Việt
+wine-run notepad
+wine-run "C:/Program Files/MyApp/app.exe"
+
+# 3. Kiểm tra cài đặt
+wine-test-vietnamese
+
 Phím tắt: Ctrl+Space - Bật/tắt Unikey
+Bảng mã: Unicode | Kiểu gõ: Telex hoặc VNI
 Fonts
 bash
 
-# Refresh cache
+# Refresh font cache
 fc-cache -fv
 
-# Xem fonts đã cài
+# Xem danh sách font đã cài
 fc-list | grep -E "DejaVu|Noto|Roboto|VNI"
+
+🛠️ Cấu Hình Nâng Cao
+GRUB Bootloader
+bash
+
+# Chỉnh sửa cấu hình
+sudo nano /etc/default/grub
+
+# Cập nhật GRUB
+sudo grub-mkconfig -o /boot/grub/grub.cfg
+
+TLP (Quản lý pin)
+
+Cấu hình tại /etc/tlp.conf:
+bash
+
+START_CHARGE_THRESH_BAT0=55
+STOP_CHARGE_THRESH_BAT0=85
+
+Security Updates
+
+Xem log:
+bash
+
+cat /var/log/security-updates.log
+
+Kiểm tra timer:
+bash
+
+systemctl status security-update.timer
 
 🐛 Khắc Phục Sự Cố
 <details> <summary><b>❌ GRUB không cập nhật</b></summary>
 bash
 
 sudo grub-mkconfig -o /boot/grub/grub.cfg
-sudo grub-install --target=x86_64-efi --efi-directory=/boot
+sudo grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
 
 </details><details> <summary><b>❌ MT5 lỗi "debugger found"</b></summary>
 
@@ -121,28 +195,75 @@ sudo pacman -U /var/cache/pacman/pkg/wine-10.2-1-x86_64.pkg.tar.zst
 </details><details> <summary><b>❌ Không gõ tiếng Việt trong Wine</b></summary>
 bash
 
+# Kiểm tra Unikey đã chạy
+ps aux | grep UniKey
+
+# Khởi động lại Unikey
 pkill -f UniKey
 unikey
-wine-run notepad
+
+# Kiểm tra font
+ls -la ~/.wine/drive_c/windows/Fonts/ | grep -E "DejaVu|Noto"
+
+</details><details> <summary><b>❌ LightDM không hiển thị theme</b></summary>
+bash
+
+# Kiểm tra theme
+ls -la /usr/share/web-greeter/themes/dark-planet/
+
+# Kiểm tra cấu hình
+cat /etc/lightdm/lightdm-webkit2-greeter.conf
 
 </details>
-📁 Cấu Trúc
+📁 Cấu Trúc Script
 text
 
 arch-setup.sh
-├── Tiện ích (print, check, backup)
+├── Hàm tiện ích
+│   ├── print_header / print_step / print_success
+│   ├── check_distro / check_internet / check_disk_space
+│   └── backup_config
 ├── Tính năng mới
-│   ├── Auto Security Updates
-│   ├── Fonts + GRUB + WiFi + DNS
-│   └── 🇻🇳 Wine Vietnamese (Unikey)
-├── Cài đặt (23 ứng dụng)
-├── Hệ thống (log, timer, tools)
+│   ├── setup_auto_security_updates   # Security patches tự động
+│   ├── install_fonts                  # Fonts đẹp
+│   ├── customize_grub                 # Bootloader theme
+│   ├── setup_wifi_management          # WiFi manager
+│   └── configure_dns                  # DNS optimization
+├── Cài đặt chính
+│   ├── remove_xfce4_panel             # Gỡ bỏ panel cũ
+│   └── install_applications           # 23 ứng dụng
+│       └── setup_wine_vietnamese      # 🇻🇳 Wine + Unikey
+├── Hệ thống
+│   ├── create_cleanup_script          # Script dọn log
+│   ├── setup_systemd_timer            # Timer tự động
+│   ├── create_tools                   # Công cụ kiểm tra
+│   └── create_wine_guide              # Hướng dẫn Wine
 └── Tổng kết
+    └── show_summary                    # Báo cáo cài đặt
 
+📦 Bảng Lệnh Nhanh
+Lệnh	Mục đích
+sudo check-status	Kiểm tra trạng thái hệ thống
+unikey	Khởi động Unikey trong Wine
+wine-run app.exe	Chạy ứng dụng Wine với tiếng Việt
+wine-test-vietnamese	Kiểm tra cài đặt tiếng Việt
+wine-setup	Hướng dẫn cấu hình Wine
+wifi	Quản lý WiFi
+dns-test	Kiểm tra DNS
+cleanup-manager	Quản lý dọn dẹp log
+fc-cache -fv	Refresh font cache
 📄 Giấy Phép
 
-MIT © Khoa Phan
-⚠️ Tuyên Bố
+Dự án được phân phối dưới giấy phép MIT. Xem file LICENSE để biết thêm chi tiết.
+⚠️ Tuyên Bố Miễn Trách
 
-Script cung cấp "như hiện tại", không bảo đảm. Người dùng tự chịu trách nhiệm.
-<div align="center"> <sub>Built with ❤️ for Arch Linux</sub> </div> ```
+Script này được cung cấp "như hiện tại", không có bất kỳ bảo đảm nào. Người dùng chịu trách nhiệm cho mọi thay đổi được thực hiện trên hệ thống của họ.
+📞 Liên Hệ & Đóng Góp
+
+    Tác Giả: Khoa Phan
+
+    Issue Tracker: GitHub Issues
+
+    Pull Requests: GitHub PRs
+
+<div align="center"> <sub>Built with ❤️ for the Arch Linux community</sub> </div>
