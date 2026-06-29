@@ -501,25 +501,29 @@ EOF
 }
 
 # ============================================================
-# PHẦN 1: GỠ BỎ XFCE4-PANEL (GIỮ NGUYÊN)
+# PHẦN 1: GỠ BỎ XFCE4-PANEL (CÓ KIỂM TRA)
 # ============================================================
 
 remove_xfce4_panel() {
     print_header "GỠ BỎ XFCE4-PANEL"
     
+    # === KIỂM TRA XFCE4-PANEL ĐÃ CÀI CHƯA ===
     if pacman -Qs xfce4-panel > /dev/null 2>&1; then
+        print_warning "Phát hiện xfce4-panel đã được cài đặt (bởi script khác)"
+        print_warning "Bỏ qua bước gỡ bỏ xfce4-panel để tránh xung đột"
+        # Không gọi remove_xfce4_panel
+        return 0
+    else
         print_step "Đang gỡ bỏ xfce4-panel và các gói liên quan..."
         pacman -Rns --noconfirm xfce4-panel xfce4-settings xfce4-session xfconf 2>/dev/null || true
         print_success "Đã gỡ bỏ xfce4-panel"
-    else
-        print_warning "xfce4-panel chưa được cài đặt, bỏ qua"
+        
+        print_step "Đang làm sạch cấu hình xfce4..."
+        rm -rf /etc/xdg/xfce4 2>/dev/null || true
+        rm -rf ~/.config/xfce4 2>/dev/null || true
+        rm -rf ~/.cache/xfce4 2>/dev/null || true
+        print_success "Đã làm sạch cấu hình xfce4"
     fi
-    
-    print_step "Đang làm sạch cấu hình xfce4..."
-    rm -rf /etc/xdg/xfce4 2>/dev/null || true
-    rm -rf ~/.config/xfce4 2>/dev/null || true
-    rm -rf ~/.cache/xfce4 2>/dev/null || true
-    print_success "Đã làm sạch cấu hình xfce4"
 }
 
 # ============================================================
@@ -534,15 +538,15 @@ install_applications() {
     pacman -Syu --noconfirm
     print_success "Đã cập nhật hệ thống"
 
-    # 1. IBus-Unikey
-    print_step "1. Cài đặt IBus-Unikey..."
+    # 1. IBus-Unikey (giữ lại cho Linux apps, nhưng Wine sẽ dùng Unikey riêng)
+    print_step "1. Cài đặt IBus-Unikey (cho ứng dụng Linux)..."
     pacman -S --noconfirm ibus ibus-unikey
     cat > /etc/environment << EOF
 GTK_IM_MODULE=ibus
 QT_IM_MODULE=ibus
 XMODIFIERS=@im=ibus
 EOF
-    print_success "Đã cài đặt IBus-Unikey"
+    print_success "Đã cài đặt IBus-Unikey cho Linux"
 
     # 2. Plank
     print_step "2. Cài đặt Plank..."
@@ -666,6 +670,241 @@ EOF
         lib32-libxslt lib32-libva lib32-gtk3 2>/dev/null || true
     print_success "Đã cài đặt Wine và plugin đầy đủ"
 
+    # ============================================================
+    # PHẦN MỚI: CÀI ĐẶT TIẾNG VIỆT CHO WINE VỚI UNIKEY
+    # ============================================================
+    setup_wine_vietnamese() {
+        print_header "CÀI ĐẶT TIẾNG VIỆT CHO WINE (UNIKEY)"
+        
+        print_step "Đang cấu hình Wine tiếng Việt..."
+        
+        # Tạo Wine prefix nếu chưa có
+        if [ ! -d "$HOME/.wine" ]; then
+            WINEPREFIX="$HOME/.wine" winecfg
+        fi
+        
+        # Copy font vào Wine
+        FONTS_DIR="$HOME/.wine/drive_c/windows/Fonts"
+        mkdir -p "$FONTS_DIR"
+        
+        FONT_FILES=(
+            "/usr/share/fonts/TTF/DejaVuSans.ttf"
+            "/usr/share/fonts/TTF/DejaVuSans-Bold.ttf"
+            "/usr/share/fonts/TTF/DejaVuSans-Oblique.ttf"
+            "/usr/share/fonts/TTF/LiberationSans-Regular.ttf"
+            "/usr/share/fonts/TTF/NotoSans-Regular.ttf"
+            "/usr/share/fonts/TTF/Roboto-Regular.ttf"
+            "/usr/share/fonts/TTF/NotoColorEmoji.ttf"
+        )
+        
+        echo "Đang copy font vào Wine..."
+        for font in "${FONT_FILES[@]}"; do
+            if [ -f "$font" ]; then
+                cp "$font" "$FONTS_DIR/" 2>/dev/null
+                echo "  ✓ $(basename $font)"
+            fi
+        done
+        
+        # Cấu hình registry locale vi-VN
+        cat > /tmp/wine-vi.reg << 'EOF'
+Windows Registry Editor Version 5.00
+
+[HKEY_CURRENT_USER\Control Panel\International]
+"Locale"="0000042A"
+"LocaleName"="vi-VN"
+"Language"="VIV"
+"Country"="Vietnam"
+"CountryCode"="084"
+"sCountry"="Vietnam"
+"sLanguage"="VIE"
+"sCurrency"="₫"
+"sDate"="-"
+"sDecimal"=","
+"sShortDate"="dd/MM/yyyy"
+"sLongDate"="dd MMMM yyyy"
+"sTime"=":"
+"sShortTime"="HH:mm"
+"sLongTime"="HH:mm:ss"
+"iCountry"="84"
+"iCurrency"="0"
+"iDate"="1"
+"iTime"="1"
+"iPaperSize"="9"
+"iMeasure"="0"
+"NumShape"="1"
+"iNegNumber"="1"
+"iLZero"="1"
+"iDigits"="2"
+"iCurrDigits"="2"
+"iTLZero"="1"
+"iTimePrefix"="0"
+"iYear"="1"
+"s1159"="SA"
+"s2359"="CH"
+"sList"=";"
+"sMonDecimalSep"=","
+"sMonGrouping"="3;0"
+"sMonThousandSep"="."
+"sThousand"="."
+"Calendar"="1"
+"FirstDayOfWeek"="1"
+"iNegCurr"="1"
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Nls\CodePage]
+"ACP"="1258"
+"OEMCP"="1258"
+"MACCP"="10010"
+"ANSI1258"="c_1258.nls"
+"OEM1258"="c_1258.nls"
+
+[HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Nls\Language]
+"Default"="0409"
+"InstallLanguage"="042A"
+
+[HKEY_CURRENT_USER\Keyboard Layout\Preload]
+"1"="0000042A"
+"2"="00000409"
+EOF
+        
+        wine regedit /tmp/wine-vi.reg 2>/dev/null
+        rm -f /tmp/wine-vi.reg
+        
+        # Cài corefonts
+        winetricks corefonts 2>/dev/null || true
+        
+        # Tải và cài Unikey
+        print_step "Cài Unikey trong Wine..."
+        UNIKEY_URL="https://www.unikey.org/download/unikey_4.3.4_setup.exe"
+        UNIKEY_FILE="/tmp/unikey_setup.exe"
+        
+        if [ ! -f "$UNIKEY_FILE" ]; then
+            echo "Đang tải Unikey..."
+            wget -O "$UNIKEY_FILE" "$UNIKEY_URL" 2>/dev/null || \
+                curl -L -o "$UNIKEY_FILE" "$UNIKEY_URL" 2>/dev/null || \
+                print_warning "Không thể tải Unikey, cần tải thủ công"
+        fi
+        
+        if [ -f "$UNIKEY_FILE" ]; then
+            echo "Đang cài Unikey..."
+            wine "$UNIKEY_FILE" /SILENT 2>/dev/null || \
+                wine "$UNIKEY_FILE" 2>/dev/null || true
+            print_success "Đã cài Unikey"
+            rm -f "$UNIKEY_FILE"
+        else
+            print_warning "Unikey chưa được cài, tải thủ công tại: https://www.unikey.org"
+        fi
+        
+        # Tạo script khởi động Unikey
+        cat > /usr/local/bin/unikey << 'EOF'
+#!/bin/bash
+# Khởi động Unikey trong Wine
+
+UNIKEY_PATH="$HOME/.wine/drive_c/Program Files (x86)/UniKey/UniKey.exe"
+
+if [ -f "$UNIKEY_PATH" ]; then
+    echo "🔄 Đang khởi động Unikey..."
+    wine "$UNIKEY_PATH" &
+    sleep 1
+    echo "✅ Unikey đã chạy"
+else
+    echo "❌ Không tìm thấy Unikey tại: $UNIKEY_PATH"
+    echo "📥 Tải tại: https://www.unikey.org"
+fi
+EOF
+        chmod +x /usr/local/bin/unikey
+        
+        # Desktop shortcut
+        cat > ~/.local/share/applications/unikey.desktop << 'EOF'
+[Desktop Entry]
+Name=Unikey (Wine)
+Comment=Vietnamese Input Method for Wine
+Exec=env WINEPREFIX="$HOME/.wine" wine "C:\\Program Files (x86)\\UniKey\\UniKey.exe"
+Icon=wine
+Type=Application
+Categories=Utility;
+StartupNotify=true
+EOF
+        
+        # Autostart
+        mkdir -p ~/.config/autostart
+        cat > ~/.config/autostart/unikey.desktop << 'EOF'
+[Desktop Entry]
+Type=Application
+Name=Unikey
+Exec=/usr/local/bin/unikey
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+EOF
+        
+        # Tạo script chạy Wine với tiếng Việt
+        cat > /usr/local/bin/wine-run << 'EOF'
+#!/bin/bash
+# Chạy ứng dụng Wine với tiếng Việt
+
+export LANG=vi_VN.UTF-8
+export LC_ALL=vi_VN.UTF-8
+
+if [ -z "$1" ]; then
+    echo "Usage: wine-run <application.exe> [args]"
+    echo ""
+    echo "Ví dụ:"
+    echo "  wine-run notepad"
+    echo "  wine-run 'C:/Program Files/MyApp/app.exe'"
+    exit 1
+fi
+
+wine "$@"
+EOF
+        chmod +x /usr/local/bin/wine-run
+        
+        # Tạo script kiểm tra
+        cat > /usr/local/bin/wine-test-vietnamese << 'EOF'
+#!/bin/bash
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${BLUE}===== KIỂM TRA TIẾNG VIỆT TRONG WINE =====${NC}"
+echo ""
+
+echo -e "${YELLOW}1. Kiểm tra locale:${NC}"
+wine reg query "HKCU\Control Panel\International" /v Locale 2>/dev/null
+echo ""
+
+echo -e "${YELLOW}2. Kiểm tra font đã cài:${NC}"
+ls -la ~/.wine/drive_c/windows/Fonts/ | grep -E "DejaVu|Noto|Roboto" | head -5
+echo ""
+
+echo -e "${YELLOW}3. Tạo file test tiếng Việt:${NC}"
+cat > /tmp/test-vietnamese.txt << 'TXT'
+Chào bạn! Đây là test tiếng Việt.
+Tiếng Việt có dấu: á à ả ã ạ, ă ắ ằ ẳ ẵ ặ, â ấ ầ ẩ ẫ ậ
+đ, ê, ô, ơ, ư
+TXT
+echo "  ✓ File test: /tmp/test-vietnamese.txt"
+echo ""
+
+echo -e "${YELLOW}4. Hướng dẫn kiểm tra:${NC}"
+echo "  ${GREEN}a. Chạy Unikey:${NC} unikey"
+echo "  ${GREEN}b. Mở Notepad:${NC} wine-run notepad /tmp/test-vietnamese.txt"
+echo "  ${GREEN}c. Bật Unikey:${NC} Ctrl+Space"
+echo "  ${GREEN}d. Gõ tiếng Việt:${NC} Kiểm tra hiển thị"
+echo ""
+
+echo -e "${BLUE}========================================${NC}"
+echo -e "${GREEN}✅ SẴN SÀNG GÕ TIẾNG VIỆT TRONG WINE!${NC}"
+echo -e "${BLUE}========================================${NC}"
+EOF
+        chmod +x /usr/local/bin/wine-test-vietnamese
+        
+        print_success "Đã cấu hình tiếng Việt cho Wine với Unikey"
+    }
+    
+    # Gọi hàm cài đặt Wine tiếng Việt
+    setup_wine_vietnamese
+
     # 13. WPS Office
     print_step "13. Cài đặt WPS Office..."
     yay -S --noconfirm wps-office-cn wps-office-mui-zh-cn ttf-wps-fonts freetype2-wps libtiff5 2>/dev/null || \
@@ -718,40 +957,57 @@ EOF
     pacman -S --noconfirm papirus-icon-theme
     print_success "Đã cài đặt Icon Papirus"
 
-    # 20. LightDM Webkit
+    # 20. LightDM Webkit (CÓ KIỂM TRA)
     print_step "20. Cài đặt LightDM Webkit và Theme Dark Planet..."
     
-    if systemctl is-active --quiet gdm 2>/dev/null || systemctl is-active --quiet sddm 2>/dev/null; then
-        print_warning "Phát hiện display manager khác (GDM/SDDM)"
-        systemctl stop gdm 2>/dev/null || true
-        systemctl stop sddm 2>/dev/null || true
-        systemctl disable gdm 2>/dev/null || true
-        systemctl disable sddm 2>/dev/null || true
-    fi
-    
-    pacman -S --noconfirm lightdm-webkit2-greeter lightdm
-    
-    if [ -d /tmp/dark-planet ]; then
-        rm -rf /tmp/dark-planet
-    fi
-    git clone https://github.com/Antergos/web-greeter-theme-dark-planet.git /tmp/dark-planet 2>/dev/null || {
-        print_warning "Không thể clone theme Dark Planet"
-        mkdir -p /usr/share/web-greeter/themes/dark-planet
-    }
-    if [ -d /tmp/dark-planet ]; then
-        mkdir -p /usr/share/web-greeter/themes/
-        cp -r /tmp/dark-planet /usr/share/web-greeter/themes/dark-planet
-        rm -rf /tmp/dark-planet
-    fi
-    
-    mkdir -p /etc/lightdm
-    cat > /etc/lightdm/lightdm.conf << EOF
+    # === KIỂM TRA LIGHTDM-GTK GREETER ===
+    if pacman -Qs lightdm-gtk-greeter > /dev/null 2>&1; then
+        print_warning "Phát hiện lightdm-gtk-greeter đã cài, giữ nguyên cấu hình"
+        print_warning "Bỏ qua cài đặt LightDM Webkit để tránh xung đột"
+        
+        # Cấu hình theme cho GTK greeter
+        mkdir -p /etc/lightdm/lightdm-gtk-greeter.conf.d
+        cat > /etc/lightdm/lightdm-gtk-greeter.conf.d/99_theme.conf << EOF
+[greeter]
+theme-name=Arc-Dark
+icon-theme-name=Papirus
+font-name=Roboto 11
+background=/usr/share/backgrounds/gnome/adwaita-day.png
+EOF
+        print_success "Đã cấu hình lightdm-gtk-greeter với theme tối"
+    else
+        # Tiến hành cài đặt LightDM Webkit
+        if systemctl is-active --quiet gdm 2>/dev/null || systemctl is-active --quiet sddm 2>/dev/null; then
+            print_warning "Phát hiện display manager khác (GDM/SDDM)"
+            systemctl stop gdm 2>/dev/null || true
+            systemctl stop sddm 2>/dev/null || true
+            systemctl disable gdm 2>/dev/null || true
+            systemctl disable sddm 2>/dev/null || true
+        fi
+        
+        pacman -S --noconfirm lightdm-webkit2-greeter lightdm
+        
+        if [ -d /tmp/dark-planet ]; then
+            rm -rf /tmp/dark-planet
+        fi
+        git clone https://github.com/Antergos/web-greeter-theme-dark-planet.git /tmp/dark-planet 2>/dev/null || {
+            print_warning "Không thể clone theme Dark Planet"
+            mkdir -p /usr/share/web-greeter/themes/dark-planet
+        }
+        if [ -d /tmp/dark-planet ]; then
+            mkdir -p /usr/share/web-greeter/themes/
+            cp -r /tmp/dark-planet /usr/share/web-greeter/themes/dark-planet
+            rm -rf /tmp/dark-planet
+        fi
+        
+        mkdir -p /etc/lightdm
+        cat > /etc/lightdm/lightdm.conf << EOF
 [Seat:*]
 greeter-session=lightdm-webkit2-greeter
 user-session=xfce
 EOF
 
-    cat > /etc/lightdm/lightdm-webkit2-greeter.conf << EOF
+        cat > /etc/lightdm/lightdm-webkit2-greeter.conf << EOF
 [greeter]
 webkit-theme = dark-planet
 debug-mode = false
@@ -760,8 +1016,9 @@ show-pane = true
 show-keyboard = true
 EOF
 
-    systemctl enable lightdm 2>/dev/null || print_warning "LightDM không thể enable"
-    print_success "Đã cài đặt LightDM Webkit và Theme Dark Planet"
+        systemctl enable lightdm 2>/dev/null || print_warning "LightDM không thể enable"
+        print_success "Đã cài đặt LightDM Webkit và Theme Dark Planet"
+    fi
 
     # 21. Plymouth
     print_step "21. Cài đặt Plymouth và Theme Dark Planet..."
@@ -832,6 +1089,19 @@ Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
 EOF
+
+    # Thêm Unikey vào autostart cho tất cả users
+    mkdir -p /etc/skel/.config/autostart
+    cat > /etc/skel/.config/autostart/unikey.desktop << EOF
+[Desktop Entry]
+Type=Application
+Name=Unikey
+Exec=/usr/local/bin/unikey
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+EOF
+
     print_success "Đã cấu hình tự động khởi động"
 }
 
@@ -1007,6 +1277,15 @@ command -v tradingview &>/dev/null && echo "✓ TradingView" || echo "✗ Tradin
 command -v gnome-calculator &>/dev/null && echo "✓ Calculator" || echo "✗ Calculator"
 snap list 2>/dev/null | grep -q zalo && echo "✓ Zalo Chat" || echo "✗ Zalo Chat"
 [ -d ~/.mt5wine ] 2>/dev/null && echo "✓ MetaTrader 5" || echo "✗ MetaTrader 5"
+echo ""
+
+echo -e "${YELLOW}===== WINE TIẾNG VIỆT =====${NC}"
+if [ -f "$HOME/.wine/drive_c/Program Files (x86)/UniKey/UniKey.exe" ]; then
+    echo "✓ Unikey đã cài đặt"
+else
+    echo "✗ Unikey chưa cài đặt"
+fi
+echo "  Lệnh: unikey, wine-run, wine-test-vietnamese"
 EOF
     chmod +x /usr/local/bin/check-status
     
@@ -1049,7 +1328,7 @@ EOF
 }
 
 # ============================================================
-# PHẦN 6: HƯỚNG DẪN WINE (GIỮ NGUYÊN)
+# PHẦN 6: HƯỚNG DẪN WINE (CẬP NHẬT)
 # ============================================================
 
 create_wine_guide() {
@@ -1066,7 +1345,12 @@ echo "2. Cài đặt các thành phần:"
 echo "   winetricks corefonts dxvk vcrun2017 vcrun2019"
 echo ""
 echo "3. Chạy ứng dụng Windows:"
-echo "   wine app.exe"
+echo "   wine-run app.exe"
+echo ""
+echo "4. Gõ tiếng Việt trong Wine:"
+echo "   unikey           # Khởi động Unikey"
+echo "   wine-run notepad # Mở Notepad"
+echo "   Ctrl+Space       # Bật/tắt Unikey"
 echo ""
 echo "===== LƯU Ý CHO METATRADER 5 ====="
 echo "MT5 yêu cầu Wine bản 10.2 để chạy ổn định"
@@ -1086,7 +1370,8 @@ show_summary() {
     print_header "CÀI ĐẶT HOÀN TẤT"
     
     echo -e "${GREEN}Các ứng dụng đã cài đặt:${NC}"
-    echo "  ✓ IBus-Unikey (gõ tiếng Việt)"
+    echo "  ✓ IBus-Unikey (gõ tiếng Việt cho Linux)"
+    echo "  ✓ Unikey (gõ tiếng Việt trong Wine)"  # Mới
     echo "  ✓ Plank (dock ứng dụng)"
     echo "  ✓ Firefox (trình duyệt web)"
     echo "  ✓ VLC Media Player (trình phát đa phương tiện)"
@@ -1097,7 +1382,7 @@ show_summary() {
     echo "  ✓ TLP (quản lý pin)"
     echo "  ✓ yt-dlp + ffmpeg (tải video/audio)"
     echo "  ✓ Driver Intel (mesa, vulkan, xf86-video-intel)"
-    echo "  ✓ Wine + plugins đầy đủ"
+    echo "  ✓ Wine + plugins đầy đủ + TIẾNG VIỆT"  # Cập nhật
     echo "  ✓ WPS Office (bộ văn phòng)"
     echo "  ✓ Zalo Chat Unofficial (Snap)"
     echo "  ✓ TradingView (AUR/Snap)"
@@ -1114,6 +1399,7 @@ show_summary() {
     echo "  🎨 GRUB Customize (bootloader đẹp)"
     echo "  📶 WiFi Manager (quản lý WiFi dễ dàng)"
     echo "  🌐 DNS 1.1.1.1 / 8.8.8.8"
+    echo "  🇻🇳 Wine tiếng Việt với Unikey"  # Mới
     
     echo -e "\n${YELLOW}📋 HƯỚNG DẪN SỬ DỤNG:${NC}"
     echo -e "1. ${CYAN}Kiểm tra trạng thái:${NC} sudo check-status"
@@ -1122,6 +1408,8 @@ show_summary() {
     echo -e "4. ${CYAN}Xem log cập nhật bảo mật:${NC} cat /var/log/security-updates.log"
     echo -e "5. ${CYAN}Quản lý dọn dẹp log:${NC} cleanup-manager {run|status|logs}"
     echo -e "6. ${CYAN}Hướng dẫn Wine:${NC} wine-setup"
+    echo -e "7. ${CYAN}Gõ tiếng Việt trong Wine:${NC} unikey + wine-run notepad"  # Mới
+    echo -e "8. ${CYAN}Kiểm tra Wine tiếng Việt:${NC} wine-test-vietnamese"  # Mới
     
     echo -e "\n${GREEN}📁 Log và báo cáo:${NC}"
     echo "  • Security updates: /var/log/security-updates.log"
@@ -1132,6 +1420,7 @@ show_summary() {
     echo "  • Giải pháp: downgrade Wine xuống 10.2"
     echo "  • Cần khởi động lại để áp dụng LightDM và Plymouth"
     echo "  • GRUB theme có thể cần cài thủ công nếu clone thất bại"
+    echo "  • Unikey tự động khởi động khi đăng nhập"  # Mới
     
     echo -e "\n${GREEN}========================================${NC}"
     echo -e "${GREEN}  🚀 HỆ THỐNG ĐÃ SẴN SÀNG!  ${NC}"
@@ -1170,7 +1459,7 @@ main() {
     
     # Các phần chính
     remove_xfce4_panel
-    install_applications
+    install_applications  # Đã bao gồm setup_wine_vietnamese bên trong
     
     # CÁC TÍNH NĂNG MỚI
     setup_auto_security_updates
@@ -1193,14 +1482,4 @@ main() {
     print_step "Chạy cập nhật security lần đầu..."
     systemctl start security-update.service 2>/dev/null || true
     
-    show_summary
-    
-    echo -e "\n${CYAN}Lịch chạy các timer:${NC}"
-    systemctl list-timers --no-pager 2>/dev/null | grep -E "log-cleanup|security-update" || echo "Đang cập nhật..."
-    
-    echo -e "\n${GREEN}✅ SCRIPT HOÀN TẤT!${NC}"
-    echo -e "${YELLOW}🔔 Khởi động lại hệ thống để áp dụng đầy đủ!${NC}"
-}
-
-# Chạy main
-main
+   
