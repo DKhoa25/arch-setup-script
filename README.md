@@ -105,8 +105,7 @@ Script này được thiết kế để tự động hóa quá trình cài đặ
 
 ## 🚀 Cài Đặt Nhanh
 
-### 1. Clone Repository
-
+1. Clone Repository
 ```bash
 git clone https://github.com/DKhoa25/arch-setup-script.git
 cd arch-setup-script
