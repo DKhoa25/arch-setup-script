@@ -137,278 +137,232 @@
 | **RAM** | ≥ 2GB (khuyến nghị 4GB+) | ![RAM](https://img.shields.io/badge/RAM-2GB+-4CAF50?style=flat) |
 
 ---
+ 📦 CÀI ĐẶT NHANH
 
-## 🚀 Cài Đặt Nhanh
+| STT | Lệnh | Mô tả |
+|:---:|------|-------|
+| 1 | `git clone https://github.com/DKhoa25/arch-setup-script.git` | Clone repository |
+| 2 | `cd arch-setup-script` | Di chuyển vào thư mục |
+| 3 | `chmod +x arch-setup.sh` | Cấp quyền thực thi |
+| 4 | `sudo ./arch-setup.sh` | Chạy script cài đặt |
 
-```bash
-# Clone repository
-git clone https://github.com/DKhoa25/arch-setup-script.git
-cd arch-setup-script
+> **⚠️ Lưu ý:** Script sẽ hỏi xác nhận trước khi bắt đầu. Nhấn `y` để tiếp tục.
 
-# Cấp quyền và chạy
-chmod +x arch-setup.sh
-sudo ./arch-setup.sh
+---
 
-    ⚠️ Script sẽ hỏi xác nhận trước khi bắt đầu. Nhấn y để tiếp tục.
+# 📚 HƯỚNG DẪN SỬ DỤNG
 
-📚 Hướng Dẫn Sử Dụng
-🔧 Công Cụ Kiểm Tra
-bash
+## 🔧 CÔNG CỤ KIỂM TRA
 
-# Kiểm tra trạng thái toàn bộ hệ thống
-sudo check-status
+| STT | Lệnh | Chức năng |
+|:---:|------|-----------|
+| 1 | `sudo check-status` | Kiểm tra trạng thái toàn bộ hệ thống |
+| 2 | `dns-test` | Kiểm tra DNS |
+| 3 | `wine-setup` | Xem hướng dẫn cấu hình Wine |
 
-# Kiểm tra DNS
-dns-test
+---
 
-# Xem hướng dẫn Wine
-wine-setup
+## 📶 QUẢN LÝ WIFI
 
-📶 Quản Lý WiFi
-bash
+| STT | Lệnh | Chức năng |
+|:---:|------|-----------|
+| 1 | `wifi` | Xem danh sách WiFi |
+| 2 | `wifi gui` | Mở GUI quản lý WiFi |
+| 3 | `wifi tui` | Mở Terminal UI (nmtui) |
+| 4 | `wifi on/off` | Bật/tắt WiFi |
+| 5 | `wifi list` | Liệt kê mạng WiFi có sẵn |
+| 6 | `wifi connect SSID [password]` | Kết nối với mạng WiFi |
 
-wifi           # Xem danh sách WiFi
-wifi gui       # Mở GUI quản lý
-wifi tui       # Mở Terminal UI (nmtui)
-wifi on/off    # Bật/tắt WiFi
-wifi list      # Liệt kê mạng WiFi
-wifi connect SSID [password]  # Kết nối WiFi
+---
 
-🧹 Quản Lý Log
-bash
+## 🧹 QUẢN LÝ LOG & DỌN DẸP
 
-cleanup-manager run     # Chạy dọn dẹp ngay
-cleanup-manager status  # Xem trạng thái timer
-cleanup-manager logs    # Xem log real-time
-cleanup-manager disable # Tắt tự động dọn
-cleanup-manager enable  # Bật tự động dọn
-cleanup-manager next    # Xem lần chạy tiếp theo
+| STT | Lệnh | Chức năng |
+|:---:|------|-----------|
+| 1 | `cleanup-manager run` | Chạy dọn dẹp ngay lập tức |
+| 2 | `cleanup-manager status` | Xem trạng thái timer tự động |
+| 3 | `cleanup-manager logs` | Xem log real-time |
+| 4 | `cleanup-manager disable` | Tắt tự động dọn dẹp |
+| 5 | `cleanup-manager enable` | Bật tự động dọn dẹp |
+| 6 | `cleanup-manager next` | Xem lần chạy tiếp theo |
 
-🇻🇳 Gõ Tiếng Việt trong Wine
-bash
+---
 
-# 1. Khởi động Unikey
-unikey
+## 🇻🇳 GÕ TIẾNG VIỆT TRONG WINE
 
-# 2. Chạy ứng dụng Wine với tiếng Việt
-wine-run notepad
-wine-run "C:/Program Files/MyApp/app.exe"
+| Bước | Lệnh | Mô tả |
+|:---:|------|-------|
+| 1 | `unikey` | Khởi động Unikey |
+| 2 | `wine-run notepad` | Chạy Notepad với hỗ trợ tiếng Việt |
+| 3 | `wine-run "C:/Program Files/MyApp/app.exe"` | Chạy ứng dụng Wine bất kỳ |
+| 4 | `wine-test-vietnamese` | Kiểm tra cài đặt tiếng Việt |
 
-# 3. Kiểm tra cài đặt
-wine-test-vietnamese
+### ⚙️ Cấu hình Unikey:
 
-    Phím tắt: Ctrl+Space - Bật/tắt Unikey
-    Bảng mã: Unicode | Kiểu gõ: Telex hoặc VNI
+| Thiết lập | Giá trị |
+|-----------|---------|
+| Phím tắt | `Ctrl + Space` - Bật/tắt Unikey |
+| Bảng mã | Unicode |
+| Kiểu gõ | Telex hoặc VNI |
 
-🔤 Fonts
-bash
+---
 
-# Refresh font cache
-fc-cache -fv
+## 🔤 QUẢN LÝ FONTS
 
-# Xem danh sách font đã cài
-fc-list | grep -E "DejaVu|Noto|Roboto|VNI"
+| STT | Lệnh | Chức năng |
+|:---:|------|-----------|
+| 1 | `fc-cache -fv` | Refresh font cache |
+| 2 | `fc-list \| grep -E "DejaVu\|Noto\|Roboto\|VNI"` | Xem danh sách font đã cài |
 
-🛠️ Cấu Hình Nâng Cao
-GRUB Bootloader
-bash
+---
 
-# Chỉnh sửa cấu hình
-sudo nano /etc/default/grub
+# 🛠️ CẤU HÌNH NÂNG CAO
 
-# Cập nhật GRUB
-sudo grub-mkconfig -o /boot/grub/grub.cfg
+## 🔄 GRUB BOOTLOADER
 
-🔋 TLP (Quản lý pin)
+| STT | Lệnh | Chức năng |
+|:---:|------|-----------|
+| 1 | `sudo nano /etc/default/grub` | Chỉnh sửa cấu hình GRUB |
+| 2 | `sudo grub-mkconfig -o /boot/grub/grub.cfg` | Cập nhật GRUB |
 
-Cấu hình tại /etc/tlp.conf:
-ini
+---
 
-START_CHARGE_THRESH_BAT0=55
-STOP_CHARGE_THRESH_BAT0=85
+## 🔋 TLP (QUẢN LÝ PIN)
 
-🔐 Security Updates
+| Thông số | Cấu hình tại `/etc/tlp.conf` |
+|----------|------------------------------|
+| Ngưỡng sạc bắt đầu | `START_CHARGE_THRESH_BAT0=55` |
+| Ngưỡng sạc dừng | `STOP_CHARGE_THRESH_BAT0=85` |
 
-Xem log:
-bash
+---
 
-cat /var/log/security-updates.log
+## 🔐 SECURITY UPDATES
 
-Kiểm tra timer:
-bash
+| STT | Lệnh | Chức năng |
+|:---:|------|-----------|
+| 1 | `cat /var/log/security-updates.log` | Xem log cập nhật bảo mật |
+| 2 | `systemctl status security-update.timer` | Kiểm tra timer tự động |
 
-systemctl status security-update.timer
+---
 
-🐛 Khắc Phục Sự Cố
-<details> <summary><b>❌ GRUB không cập nhật</b></summary>
-bash
+# 🐛 KHẮC PHỤC SỰ CỐ
 
-sudo grub-mkconfig -o /boot/grub/grub.cfg
-sudo grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB
+## ❌ LỖI: GRUB KHÔNG CẬP NHẬT
 
-</details><details> <summary><b>❌ MT5 lỗi "debugger found"</b></summary>
+| STT | Lệnh | Mô tả |
+|:---:|------|-------|
+| 1 | `sudo grub-mkconfig -o /boot/grub/grub.cfg` | Tạo cấu hình GRUB mới |
+| 2 | `sudo grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB` | Cài đặt lại GRUB cho UEFI |
 
-Downgrade Wine xuống 10.2:
-bash
+---
 
-sudo pacman -U /var/cache/pacman/pkg/wine-10.2-1-x86_64.pkg.tar.zst
+## ❌ LỖI: MT5 "DEBUGGER FOUND"
 
-</details><details> <summary><b>❌ Không gõ tiếng Việt trong Wine</b></summary>
-bash
+| Bước | Lệnh | Mô tả |
+|:---:|------|-------|
+| 1 | `sudo pacman -U /var/cache/pacman/pkg/wine-10.2-1-x86_64.pkg.tar.zst` | Downgrade Wine xuống version 10.2 |
 
-# Kiểm tra Unikey đã chạy
-ps aux | grep UniKey
+---
 
-# Khởi động lại Unikey
-pkill -f UniKey
-unikey
+## ❌ LỖI: KHÔNG GÕ TIẾNG VIỆT TRONG WINE
 
-# Kiểm tra font
-ls -la ~/.wine/drive_c/windows/Fonts/ | grep -E "DejaVu|Noto"
+| Bước | Lệnh | Mô tả |
+|:---:|------|-------|
+| 1 | `ps aux \| grep UniKey` | Kiểm tra Unikey đã chạy |
+| 2 | `pkill -f UniKey` | Tắt Unikey |
+| 3 | `unikey` | Khởi động lại Unikey |
+| 4 | `ls -la ~/.wine/drive_c/windows/Fonts/ \| grep -E "DejaVu\|Noto"` | Kiểm tra font đã cài |
 
-</details><details> <summary><b>❌ LightDM không hiển thị theme</b></summary>
-bash
+---
 
-# Kiểm tra theme
-ls -la /usr/share/web-greeter/themes/dark-planet/
+## ❌ LỖI: LIGHTDM KHÔNG HIỂN THỊ THEME
 
-# Kiểm tra cấu hình
-cat /etc/lightdm/lightdm-webkit2-greeter.conf
+| Bước | Lệnh | Mô tả |
+|:---:|------|-------|
+| 1 | `ls -la /usr/share/web-greeter/themes/dark-planet/` | Kiểm tra theme tồn tại |
+| 2 | `cat /etc/lightdm/lightdm-webkit2-greeter.conf` | Kiểm tra cấu hình LightDM |
 
-</details>
-📁 Cấu Trúc Script
-text
 
-arch-setup.sh
-├── Hàm tiện ích
-│   ├── print_header / print_step / print_success
-│   ├── check_distro / check_internet / check_disk_space
-│   └── backup_config
-├── Tính năng mới
-│   ├── setup_auto_security_updates   # Security patches tự động
-│   ├── install_fonts                  # Fonts đẹp
-│   ├── customize_grub                 # Bootloader theme
-│   ├── setup_wifi_management          # WiFi manager
-│   └── configure_dns                  # DNS optimization
-├── Cài đặt chính
-│   ├── remove_xfce4_panel             # Gỡ bỏ panel cũ
-│   └── install_applications           # 23 ứng dụng
-│       └── setup_wine_vietnamese      # 🇻🇳 Wine + Unikey
-├── Hệ thống
-│   ├── create_cleanup_script          # Script dọn log
-│   ├── setup_systemd_timer            # Timer tự động
-│   ├── create_tools                   # Công cụ kiểm tra
-│   └── create_wine_guide              # Hướng dẫn Wine
-└── Tổng kết
-    └── show_summary                    # Báo cáo cài đặt
+# 📋 BẢNG LỆNH NHANH THEO NHÓM
 
-📦 Bảng Lệnh Nhanh - Arch Linux
-🚀 Lệnh Nhanh
-text
+## 🏗️ QUẢN LÝ HỆ THỐNG
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ ⚡ Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ sudo check-status                           │ Kiểm tra trạng thái hệ thống                 │
-│ 2  │ unikey                                      │ Khởi động Unikey trong Wine                  │
-│ 3  │ wine-run app.exe                            │ Chạy ứng dụng Wine với tiếng Việt            │
-│ 4  │ wifi                                        │ Quản lý WiFi                                 │
-│ 5  │ bluetoothctl                                │ Quản lý Bluetooth                            │
-│ 6  │ dns-test                                    │ Kiểm tra DNS                                 │
-│ 7  │ grub-mkconfig                               │ Cập nhật GRUB                                │
-│ 8  │ pacman -Syu                                 │ Cập nhật toàn bộ hệ thống                    │
-│ 9  │ fc-cache -fv                                │ Refresh font cache                           │
-│ 10 │ systemctl status security-update.timer      │ Kiểm tra cập nhật bảo mật                    │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+| STT | ⚙️ Lệnh | 📝 Mục đích |
+|:---:|---------|-------------|
+| 1 | `sudo check-status` | Kiểm tra trạng thái hệ thống |
+| 2 | `systemctl status security-update.timer` | Kiểm tra cập nhật bảo mật |
+| 3 | `journalctl -xe` | Xem log hệ thống |
+| 4 | `htop` | Giám sát hệ thống |
+| 5 | `neofetch` | Hiển thị thông tin hệ thống |
+| 6 | `pacman -Syu` | Cập nhật toàn bộ hệ thống |
 
-📂 Bảng Lệnh Theo Nhóm
-🏗️ Quản lý Hệ thống
-text
+---
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ ⚙️ Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ sudo check-status                           │ Kiểm tra trạng thái hệ thống                 │
-│ 2  │ systemctl status security-update.timer      │ Kiểm tra cập nhật bảo mật                    │
-│ 3  │ journalctl -xe                              │ Xem log hệ thống                             │
-│ 4  │ htop                                        │ Giám sát hệ thống                            │
-│ 5  │ neofetch                                    │ Hiển thị thông tin hệ thống                  │
-│ 6  │ pacman -Syu                                 │ Cập nhật toàn bộ hệ thống                    │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+## 💾 QUẢN LÝ Ổ ĐĨA & BỘ NHỚ
 
-💾 Quản lý Ổ đĩa & Bộ nhớ
-text
+| STT | 💽 Lệnh | 📝 Mục đích |
+|:---:|---------|-------------|
+| 1 | `lsblk -f` | Xem thông tin phân vùng |
+| 2 | `df -h` | Kiểm tra dung lượng đĩa |
+| 3 | `free -h` | Kiểm tra RAM |
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ 💽 Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ lsblk -f                                    │ Xem thông tin phân vùng                      │
-│ 2  │ df -h                                       │ Kiểm tra dung lượng đĩa                      │
-│ 3  │ free -h                                     │ Kiểm tra RAM                                 │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+---
 
-🌐 Quản lý Mạng & Kết nối
-text
+## 🌐 QUẢN LÝ MẠNG & KẾT NỐI
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ 🌍 Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ wifi                                        │ Quản lý WiFi                                 │
-│ 2  │ wifi gui                                    │ Mở GUI quản lý WiFi                          │
-│ 3  │ wifi tui                                    │ Mở Terminal UI (nmtui)                       │
-│ 4  │ wifi on/off                                 │ Bật/tắt WiFi                                 │
-│ 5  │ wifi connect SSID [password]                │ Kết nối WiFi                                 │
-│ 6  │ dns-test                                    │ Kiểm tra DNS                                 │
-│ 7  │ bluetoothctl                                │ Quản lý Bluetooth                            │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+| STT | 🌍 Lệnh | 📝 Mục đích |
+|:---:|---------|-------------|
+| 1 | `wifi` | Quản lý WiFi |
+| 2 | `wifi gui` | Mở GUI quản lý WiFi |
+| 3 | `wifi tui` | Mở Terminal UI (nmtui) |
+| 4 | `wifi on/off` | Bật/tắt WiFi |
+| 5 | `wifi connect SSID [password]` | Kết nối WiFi |
+| 6 | `dns-test` | Kiểm tra DNS |
+| 7 | `bluetoothctl` | Quản lý Bluetooth |
 
-🍷 Quản lý Wine & Tiếng Việt
-text
+---
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ 🍇 Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ unikey                                      │ Khởi động Unikey trong Wine                  │
-│ 2  │ wine-run app.exe                            │ Chạy ứng dụng Wine với tiếng Việt            │
-│ 3  │ wine-test-vietnamese                        │ Kiểm tra cài đặt tiếng Việt                  │
-│ 4  │ wine-setup                                  │ Hướng dẫn cấu hình Wine                      │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+## 🍷 QUẢN LÝ WINE & TIẾNG VIỆT
 
-🖥️ Quản lý Hệ thống khởi động
-text
+| STT | 🍇 Lệnh | 📝 Mục đích |
+|:---:|---------|-------------|
+| 1 | `unikey` | Khởi động Unikey trong Wine |
+| 2 | `wine-run app.exe` | Chạy ứng dụng Wine với tiếng Việt |
+| 3 | `wine-test-vietnamese` | Kiểm tra cài đặt tiếng Việt |
+| 4 | `wine-setup` | Hướng dẫn cấu hình Wine |
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ 🚀 Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ grub-mkconfig -o /boot/grub/grub.cfg        │ Cập nhật GRUB                                │
-│ 2  │ grub-install --target=x86_64-efi            │ Cài đặt GRUB UEFI                            │
-│    │ --efi-directory=/boot                       │                                            │
-│    │ --bootloader-id=GRUB                       │                                            │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+---
 
-🧹 Dọn dẹp & Tối ưu
-text
+## 🖥️ QUẢN LÝ HỆ THỐNG KHỞI ĐỘNG
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ 🧽 Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ cleanup-manager run                         │ Chạy dọn dẹp ngay                            │
-│ 2  │ cleanup-manager status                      │ Xem trạng thái timer                         │
-│ 3  │ cleanup-manager logs                        │ Xem log real-time                            │
-│ 4  │ cleanup-manager disable/enable              │ Tắt/bật tự động dọn                          │
-│ 5  │ cleanup-manager next                        │ Xem lần chạy tiếp theo                       │
-│ 6  │ fc-cache -fv                                │ Refresh font cache                           │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+| STT | 🚀 Lệnh | 📝 Mục đích |
+|:---:|---------|-------------|
+| 1 | `sudo grub-mkconfig -o /boot/grub/grub.cfg` | Cập nhật GRUB |
+| 2 | `sudo grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB` | Cài đặt GRUB UEFI |
 
-🔋 Quản lý Năng lượng
-text
+---
 
-┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
-│ #  │ ⚡ Lệnh                                      │ 📝 Mục đích                                  │
-├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
-│ 1  │ tlp-stat -b                                 │ Kiểm tra trạng thái pin                      │
-│ 2  │ tlp-stat -s                                 │ Kiểm tra cấu hình TLP                        │
-└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
+## 🧹 DỌN DẸP & TỐI ƯU
+
+| STT | 🧽 Lệnh | 📝 Mục đích |
+|:---:|---------|-------------|
+| 1 | `cleanup-manager run` | Chạy dọn dẹp ngay |
+| 2 | `cleanup-manager status` | Xem trạng thái timer |
+| 3 | `cleanup-manager logs` | Xem log real-time |
+| 4 | `cleanup-manager disable/enable` | Tắt/bật tự động dọn |
+| 5 | `cleanup-manager next` | Xem lần chạy tiếp theo |
+| 6 | `fc-cache -fv` | Refresh font cache |
+
+---
+
+## 🔋 QUẢN LÝ NĂNG LƯỢNG
+
+| STT | ⚡ Lệnh | 📝 Mục đích |
+|:---:|---------|-------------|
+| 1 | `tlp-stat -b` | Kiểm tra trạng thái pin |
+| 2 | `tlp-stat -s` | Kiểm tra cấu hình TLP |
+
+
 
 📝 Hướng dẫn sử dụng
 🔹 Copy lệnh nhanh
