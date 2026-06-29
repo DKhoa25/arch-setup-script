@@ -302,101 +302,132 @@ arch-setup.sh
 └── Tổng kết
     └── show_summary                    # Báo cáo cài đặt
 
-## 📦 Bảng Lệnh Nhanh
+📦 Bảng Lệnh Nhanh - Arch Linux
+🚀 Lệnh Nhanh
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `sudo check-status` | Kiểm tra trạng thái hệ thống | ![Status](https://img.shields.io/badge/STATUS-1793D1?style=flat&logo=arch-linux&logoColor=white) |
-| `unikey` | Khởi động Unikey trong Wine | ![Unikey](https://img.shields.io/badge/UNIKEY-1793D1?style=flat&logo=keyboard&logoColor=white) |
-| `wine-run app.exe` | Chạy ứng dụng Wine với tiếng Việt | ![Wine](https://img.shields.io/badge/WINE_RUN-1793D1?style=flat&logo=wine&logoColor=white) |
-| `wine-test-vietnamese` | Kiểm tra cài đặt tiếng Việt | ![Test](https://img.shields.io/badge/WINE_TEST-1793D1?style=flat&logo=checkmarx&logoColor=white) |
-| `wine-setup` | Hướng dẫn cấu hình Wine | ![Setup](https://img.shields.io/badge/WINE_SETUP-1793D1?style=flat&logo=gnu-bash&logoColor=white) |
-| `wifi` | Quản lý WiFi | ![WiFi](https://img.shields.io/badge/WIFI_MGR-1793D1?style=flat&logo=wifi&logoColor=white) |
-| `dns-test` | Kiểm tra DNS | ![DNS](https://img.shields.io/badge/DNS_TEST-1793D1?style=flat&logo=cloudflare&logoColor=white) |
-| `cleanup-manager` | Quản lý dọn dẹp log | ![Cleanup](https://img.shields.io/badge/CLEANUP-1793D1?style=flat&logo=cleanup&logoColor=white) |
-| `fc-cache -fv` | Refresh font cache | ![Fonts](https://img.shields.io/badge/FONT_CACHE-1793D1?style=flat&logo=adobe&logoColor=white) |
-| `systemctl status security-update.timer` | Kiểm tra cập nhật bảo mật | ![Security](https://img.shields.io/badge/SECURITY-1793D1?style=flat&logo=shield&logoColor=white) |
-| `grub-mkconfig -o /boot/grub/grub.cfg` | Cập nhật GRUB | ![GRUB](https://img.shields.io/badge/GRUB-1793D1?style=flat&logo=gnu&logoColor=white) |
-| `tlp-stat -b` | Kiểm tra trạng thái pin | ![TLP](https://img.shields.io/badge/TLP_BATTERY-1793D1?style=flat&logo=linux&logoColor=white) |
-| `bluetoothctl` | Quản lý Bluetooth | ![BT](https://img.shields.io/badge/BLUETOOTH-1793D1?style=flat&logo=bluetooth&logoColor=white) |
-| `pacman -Syu` | Cập nhật toàn bộ hệ thống | ![Update](https://img.shields.io/badge/PACMAN_UPDATE-1793D1?style=flat&logo=arch-linux&logoColor=white) |
-| `journalctl -xe` | Xem log hệ thống | ![Journal](https://img.shields.io/badge/JOURNALCTL-1793D1?style=flat&logo=linux&logoColor=white) |
-| `lsblk -f` | Xem thông tin phân vùng | ![LSBLK](https://img.shields.io/badge/LSBLK-1793D1?style=flat&logo=disk&logoColor=white) |
-| `df -h` | Kiểm tra dung lượng đĩa | ![DF](https://img.shields.io/badge/DF_H-1793D1?style=flat&logo=storage&logoColor=white) |
-| `free -h` | Kiểm tra RAM | ![Free](https://img.shields.io/badge/FREE_H-1793D1?style=flat&logo=memory&logoColor=white) |
-| `htop` | Giám sát hệ thống | ![HTOP](https://img.shields.io/badge/HTOP-1793D1?style=flat&logo=top&logoColor=white) |
-| `neofetch` | Hiển thị thông tin hệ thống | ![Neofetch](https://img.shields.io/badge/NEOFETCH-1793D1?style=flat&logo=linux&logoColor=white) |
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ ⚡ Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ sudo check-status                           │ Kiểm tra trạng thái hệ thống                 │
+│ 2  │ unikey                                      │ Khởi động Unikey trong Wine                  │
+│ 3  │ wine-run app.exe                            │ Chạy ứng dụng Wine với tiếng Việt            │
+│ 4  │ wifi                                        │ Quản lý WiFi                                 │
+│ 5  │ bluetoothctl                                │ Quản lý Bluetooth                            │
+│ 6  │ dns-test                                    │ Kiểm tra DNS                                 │
+│ 7  │ grub-mkconfig                               │ Cập nhật GRUB                                │
+│ 8  │ pacman -Syu                                 │ Cập nhật toàn bộ hệ thống                    │
+│ 9  │ fc-cache -fv                                │ Refresh font cache                           │
+│ 10 │ systemctl status security-update.timer      │ Kiểm tra cập nhật bảo mật                    │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
----
+📂 Bảng Lệnh Theo Nhóm
+🏗️ Quản lý Hệ thống
+text
 
-## 🎯 Bảng Lệnh Theo Nhóm
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ ⚙️ Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ sudo check-status                           │ Kiểm tra trạng thái hệ thống                 │
+│ 2  │ systemctl status security-update.timer      │ Kiểm tra cập nhật bảo mật                    │
+│ 3  │ journalctl -xe                              │ Xem log hệ thống                             │
+│ 4  │ htop                                        │ Giám sát hệ thống                            │
+│ 5  │ neofetch                                    │ Hiển thị thông tin hệ thống                  │
+│ 6  │ pacman -Syu                                 │ Cập nhật toàn bộ hệ thống                    │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
-### 🔹 Quản lý Hệ thống
+💾 Quản lý Ổ đĩa & Bộ nhớ
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `sudo check-status` | Kiểm tra trạng thái hệ thống | ![Status](https://img.shields.io/badge/SYSTEM-1793D1?style=flat&logo=arch-linux&logoColor=white) |
-| `systemctl status security-update.timer` | Kiểm tra cập nhật bảo mật | ![Security](https://img.shields.io/badge/SECURITY-1793D1?style=flat&logo=shield&logoColor=white) |
-| `journalctl -xe` | Xem log hệ thống | ![Journal](https://img.shields.io/badge/LOGS-1793D1?style=flat&logo=linux&logoColor=white) |
-| `htop` | Giám sát hệ thống | ![HTOP](https://img.shields.io/badge/MONITOR-1793D1?style=flat&logo=top&logoColor=white) |
-| `neofetch` | Hiển thị thông tin hệ thống | ![Info](https://img.shields.io/badge/INFO-1793D1?style=flat&logo=linux&logoColor=white) |
-| `pacman -Syu` | Cập nhật toàn bộ hệ thống | ![Update](https://img.shields.io/badge/UPDATE-1793D1?style=flat&logo=arch-linux&logoColor=white) |
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ 💽 Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ lsblk -f                                    │ Xem thông tin phân vùng                      │
+│ 2  │ df -h                                       │ Kiểm tra dung lượng đĩa                      │
+│ 3  │ free -h                                     │ Kiểm tra RAM                                 │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
-### 🔹 Quản lý Ổ đĩa & Bộ nhớ
+🌐 Quản lý Mạng & Kết nối
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `lsblk -f` | Xem thông tin phân vùng | ![LSBLK](https://img.shields.io/badge/DISK-1793D1?style=flat&logo=disk&logoColor=white) |
-| `df -h` | Kiểm tra dung lượng đĩa | ![DF](https://img.shields.io/badge/STORAGE-1793D1?style=flat&logo=storage&logoColor=white) |
-| `free -h` | Kiểm tra RAM | ![RAM](https://img.shields.io/badge/MEMORY-1793D1?style=flat&logo=memory&logoColor=white) |
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ 🌍 Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ wifi                                        │ Quản lý WiFi                                 │
+│ 2  │ wifi gui                                    │ Mở GUI quản lý WiFi                          │
+│ 3  │ wifi tui                                    │ Mở Terminal UI (nmtui)                       │
+│ 4  │ wifi on/off                                 │ Bật/tắt WiFi                                 │
+│ 5  │ wifi connect SSID [password]                │ Kết nối WiFi                                 │
+│ 6  │ dns-test                                    │ Kiểm tra DNS                                 │
+│ 7  │ bluetoothctl                                │ Quản lý Bluetooth                            │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
-### 🔹 Quản lý Mạng & Kết nối
+🍷 Quản lý Wine & Tiếng Việt
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `wifi` | Quản lý WiFi | ![WiFi](https://img.shields.io/badge/WIFI-1793D1?style=flat&logo=wifi&logoColor=white) |
-| `wifi gui` | Mở GUI quản lý WiFi | ![WiFi_GUI](https://img.shields.io/badge/WIFI_GUI-1793D1?style=flat&logo=wifi&logoColor=white) |
-| `wifi tui` | Mở Terminal UI (nmtui) | ![WiFi_TUI](https://img.shields.io/badge/WIFI_TUI-1793D1?style=flat&logo=terminal&logoColor=white) |
-| `wifi on/off` | Bật/tắt WiFi | ![WiFi_Toggle](https://img.shields.io/badge/WIFI_TOGGLE-1793D1?style=flat&logo=wifi&logoColor=white) |
-| `wifi connect SSID [password]` | Kết nối WiFi | ![WiFi_Connect](https://img.shields.io/badge/WIFI_CONNECT-1793D1?style=flat&logo=wifi&logoColor=white) |
-| `dns-test` | Kiểm tra DNS | ![DNS](https://img.shields.io/badge/DNS-1793D1?style=flat&logo=cloudflare&logoColor=white) |
-| `bluetoothctl` | Quản lý Bluetooth | ![BT](https://img.shields.io/badge/BLUETOOTH-1793D1?style=flat&logo=bluetooth&logoColor=white) |
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ 🍇 Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ unikey                                      │ Khởi động Unikey trong Wine                  │
+│ 2  │ wine-run app.exe                            │ Chạy ứng dụng Wine với tiếng Việt            │
+│ 3  │ wine-test-vietnamese                        │ Kiểm tra cài đặt tiếng Việt                  │
+│ 4  │ wine-setup                                  │ Hướng dẫn cấu hình Wine                      │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
-### 🔹 Quản lý Wine & Tiếng Việt
+🖥️ Quản lý Hệ thống khởi động
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `unikey` | Khởi động Unikey trong Wine | ![Unikey](https://img.shields.io/badge/UNIKEY-1793D1?style=flat&logo=keyboard&logoColor=white) |
-| `wine-run app.exe` | Chạy ứng dụng Wine với tiếng Việt | ![Wine_Run](https://img.shields.io/badge/WINE_RUN-1793D1?style=flat&logo=wine&logoColor=white) |
-| `wine-test-vietnamese` | Kiểm tra cài đặt tiếng Việt | ![Wine_Test](https://img.shields.io/badge/WINE_TEST-1793D1?style=flat&logo=checkmarx&logoColor=white) |
-| `wine-setup` | Hướng dẫn cấu hình Wine | ![Wine_Setup](https://img.shields.io/badge/WINE_SETUP-1793D1?style=flat&logo=gnu-bash&logoColor=white) |
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ 🚀 Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ grub-mkconfig -o /boot/grub/grub.cfg        │ Cập nhật GRUB                                │
+│ 2  │ grub-install --target=x86_64-efi            │ Cài đặt GRUB UEFI                            │
+│    │ --efi-directory=/boot                       │                                            │
+│    │ --bootloader-id=GRUB                       │                                            │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
-### 🔹 Quản lý Hệ thống khởi động
+🧹 Dọn dẹp & Tối ưu
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `grub-mkconfig -o /boot/grub/grub.cfg` | Cập nhật GRUB | ![GRUB](https://img.shields.io/badge/GRUB-1793D1?style=flat&logo=gnu&logoColor=white) |
-| `grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB` | Cài đặt GRUB UEFI | ![GRUB_Install](https://img.shields.io/badge/GRUB_INSTALL-1793D1?style=flat&logo=gnu&logoColor=white) |
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ 🧽 Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ cleanup-manager run                         │ Chạy dọn dẹp ngay                            │
+│ 2  │ cleanup-manager status                      │ Xem trạng thái timer                         │
+│ 3  │ cleanup-manager logs                        │ Xem log real-time                            │
+│ 4  │ cleanup-manager disable/enable              │ Tắt/bật tự động dọn                          │
+│ 5  │ cleanup-manager next                        │ Xem lần chạy tiếp theo                       │
+│ 6  │ fc-cache -fv                                │ Refresh font cache                           │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
-### 🔹 Dọn dẹp & Tối ưu
+🔋 Quản lý Năng lượng
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `cleanup-manager run` | Chạy dọn dẹp ngay | ![Clean_Run](https://img.shields.io/badge/CLEAN_RUN-1793D1?style=flat&logo=cleanup&logoColor=white) |
-| `cleanup-manager status` | Xem trạng thái timer | ![Clean_Status](https://img.shields.io/badge/CLEAN_STATUS-1793D1?style=flat&logo=cleanup&logoColor=white) |
-| `cleanup-manager logs` | Xem log real-time | ![Clean_Logs](https://img.shields.io/badge/CLEAN_LOGS-1793D1?style=flat&logo=cleanup&logoColor=white) |
-| `cleanup-manager disable/enable` | Tắt/bật tự động dọn | ![Clean_Toggle](https://img.shields.io/badge/CLEAN_TOGGLE-1793D1?style=flat&logo=cleanup&logoColor=white) |
-| `cleanup-manager next` | Xem lần chạy tiếp theo | ![Clean_Next](https://img.shields.io/badge/CLEAN_NEXT-1793D1?style=flat&logo=cleanup&logoColor=white) |
-| `fc-cache -fv` | Refresh font cache | ![Fonts](https://img.shields.io/badge/FONT_CACHE-1793D1?style=flat&logo=adobe&logoColor=white) |
+┌────┬──────────────────────────────────────────────┬────────────────────────────────────────────┐
+│ #  │ ⚡ Lệnh                                      │ 📝 Mục đích                                  │
+├────┼──────────────────────────────────────────────┼────────────────────────────────────────────┤
+│ 1  │ tlp-stat -b                                 │ Kiểm tra trạng thái pin                      │
+│ 2  │ tlp-stat -s                                 │ Kiểm tra cấu hình TLP                        │
+└────┴──────────────────────────────────────────────┴────────────────────────────────────────────┘
 
-### 🔹 Quản lý Năng lượng
+📝 Hướng dẫn sử dụng
+🔹 Copy lệnh nhanh
+text
 
-| Lệnh | Mục đích | Blue Point |
-|------|----------|------------|
-| `tlp-stat -b` | Kiểm tra trạng thái pin | ![TLP](https://img.shields.io/badge/TLP_BATTERY-1793D1?style=flat&logo=linux&logoColor=white) |
-| `tlp-stat -s` | Kiểm tra cấu hình TLP | ![TLP_Status](https://img.shields.io/badge/TLP_STATUS-1793D1?style=flat&logo=linux&logoColor=white) |
+1. Bôi đen dòng lệnh cần copy
+2. Ctrl+C (hoặc Cmd+C trên Mac)
+3. Dán vào terminal: Ctrl+Shift+V
 
----
+🔹 Tùy chỉnh tham số
+text
+
+Thay thế các tham số trong [ ] với giá trị của bạn:
+• SSID        → Tên WiFi của bạn
+• password    → Mật khẩu WiFi
+• app.exe     → Tên ứng dụng .exe
+
+💡 Mẹo: Sử dụng Ctrl+R trong terminal để tìm kiếm lịch sử lệnh đã dùng!
+
 
 📄 Giấy Phép
 
